@@ -72,13 +72,13 @@
     <!-- Terminal body -->
     <div class="border border-t-0 border-t-border rounded-b-lg bg-t-bg relative overflow-hidden">
       <div class="absolute inset-0 pointer-events-none scanlines"></div>
-      <pre id="screen" class="px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[13px] sm:text-[15px] leading-[1.6] min-h-[55vh] sm:min-h-[60vh] whitespace-pre-wrap fade-in"></pre>
+      <pre id="screen" class="px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[16px] sm:text-[18px] leading-[1.6] min-h-[55vh] sm:min-h-[60vh] whitespace-pre-wrap fade-in"></pre>
       <div id="input-bar" class="flex items-center px-4 sm:px-6 py-3 border-t border-t-border">
-        <span class="text-t-accent font-bold mr-2 text-sm sm:text-base">❯</span>
+        <span class="text-t-accent font-bold mr-2 text-base sm:text-lg">❯</span>
         <input
           id="input"
           type="text"
-          class="bg-transparent text-t-fg text-sm sm:text-base outline-none flex-1 caret-t-accent placeholder:text-t-dim/40 font-mono"
+          class="bg-transparent text-t-fg text-base sm:text-lg outline-none flex-1 caret-t-accent placeholder:text-t-dim/40 font-mono"
           autofocus
           autocomplete="off"
           autocapitalize="off"
@@ -912,7 +912,7 @@ function prepareWord() {
     S.phase = 'show';
     S.inputEnabled = false;
     render();
-    const dur = Math.max(1500, Math.min(3000, word.length * 350));
+    const dur = Math.max(3000, Math.min(6000, word.length * 600));
     S.timer = setTimeout(() => {
       S.phase = 'type';
       S.inputEnabled = true;
@@ -1063,7 +1063,7 @@ function showDiscoveryWord() {
   S.inputEnabled = false;
   render();
   const word = S.discoveryWords[S.discoveryIdx].word;
-  const dur = Math.max(1500, Math.min(2500, word.length * 350));
+  const dur = Math.max(2500, Math.min(5000, word.length * 500));
   S.timer = setTimeout(() => {
     S.discoveryPhase = 'type';
     S.inputEnabled = true;
@@ -1158,7 +1158,7 @@ function render() {
   }
 
   scr.innerHTML = content;
-  scr.className = 'px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[13px] sm:text-[15px] leading-[1.6] min-h-[55vh] sm:min-h-[60vh] whitespace-pre-wrap fade-in';
+  scr.className = 'px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[16px] sm:text-[18px] leading-[1.6] min-h-[55vh] sm:min-h-[60vh] whitespace-pre-wrap fade-in';
   input.placeholder = placeholder;
   input.disabled = !S.inputEnabled;
   if (S.inputEnabled) input.focus();
