@@ -57,7 +57,7 @@
     ::selection { background: rgba(244,132,95,0.3); }
   </style>
 </head>
-<body class="bg-t-bg min-h-screen flex items-start justify-center p-3 sm:p-8 selection:bg-t-accent/30">
+<body class="bg-t-bg min-h-screen flex items-center justify-center p-3 sm:p-8 selection:bg-t-accent/30">
   <div class="w-full max-w-[68ch]">
     <!-- Terminal title bar -->
     <div class="flex items-center gap-2 px-4 py-2 bg-t-surface rounded-t-lg border border-t-border">
@@ -127,43 +127,47 @@ const SENTENCES = {
 };
 
 // ─── ASCII ART ───────────────────────────────────────────────
+// Block-character owl — renders cleanly in all monospace fonts
 const OWL = {
-  idle: `       ◇
-      ╱ ╲
-    ╱ ◉ ◉ ╲
-    ╲  ▾  ╱
-     ╰───╯
-      ╱ ╲
-     ╱╱ ╲╲`,
-  happy: `       ◇
-      ╱ ╲
-    ╱ ◕‿◕ ╲
-    ╲     ╱
-     ╰───╯
-      ╱ ╲
-     ╱╱ ╲╲`,
-  celebrate: `    ✦  ◇  ✦
-     ╲╱ ╲╱
-    ╱ ◕◡◕ ╲
-    ╲     ╱
-     ╰───╯
-     ╱╱ ╲╲
-    ╱╱   ╲╲`,
-  think: `       ◇  · ·
-      ╱ ╲  ·
-    ╱ ◉ ◉ ╲
-    ╲  -  ╱
-     ╰───╯
-      ╱ ╲
-     ╱╱ ╲╲`,
-  encourage: `       ◇
-      ╱ ╲
-    ╱ ◉_◉ ╲
-    ╲  ◡  ╱
-     ╰───╯
-      ╱ ╲
-     ╱╱ ╲╲`,
+  idle: `    ▄███▄
+   █ ◉ ◉ █
+    █ ▾ █
+    ▀███▀
+     █ █
+    ▀   ▀`,
+  happy: `    ▄███▄
+   █ ◕‿◕ █
+    █   █
+    ▀███▀
+     █ █
+    ▀   ▀`,
+  celebrate: `  ✦ ▄███▄ ✦
+   █ ◕◡◕ █
+    █   █
+    ▀███▀
+    █   █
+   ▀     ▀`,
+  think: `    ▄███▄  ·
+   █ ◉ ◉ █·
+    █ - █
+    ▀███▀
+     █ █
+    ▀   ▀`,
+  encourage: `    ▄███▄
+   █ ◉ ◉ █
+    █ ◡ █
+    ▀███▀
+     █ █
+    ▀   ▀`,
 };
+
+// Big block title for welcome screen (from oh-my-logo)
+const LOGO = `██████╗ ██╗    ██╗██╗     ███████╗██╗  ██╗
+██╔═══██╗██║    ██║██║     ██╔════╝██║  ██║
+██║   ██║██║ █╗ ██║██║     ███████╗███████║
+██║   ██║██║███╗██║██║     ╚════██║██╔══██║
+╚██████╔╝╚███╔███╔╝███████╗███████║██║  ██║
+ ╚═════╝  ╚══╝╚══╝ ╚══════╝╚══════╝╚═╝  ╚═╝`;
 
 const AVATARS = [
   { id: 'owl',    face: '{◉,◉}', name: 'Owl' },
@@ -384,14 +388,11 @@ function makeScramble(word) {
 // ─── SCREENS ─────────────────────────────────────────────────
 
 function screenWelcome() {
+  const logo = LOGO.split('\n').map(l => '  ' + tc(l, 'accent')).join('\n');
   return [
     '',
-    center(tc('◇', 'accent')),
-    '',
-    center(tc('┌─────────────────────────────────┐', 'dim')),
-    center(tc('│', 'dim') + tc('    o w l s h ', 'accent') + '                   ' + tc('│', 'dim')),
-    center(tc('│', 'dim') + tdim('    sight words terminal         ') + tc('│', 'dim')),
-    center(tc('└─────────────────────────────────┘', 'dim')),
+    logo,
+    center(tdim('sight words terminal')),
     '',
     owlArt('idle').split('\n').map(l => center(l)).join('\n'),
     '',
