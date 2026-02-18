@@ -544,7 +544,7 @@ function screenGame() {
   }).join(' ');
 
   let lines = [
-    `  ${tc(lvl.name, 'blue')} ${tdim('│')} ${tc(mode.icon + ' ' + mode.name, 'accent')} ${tdim('│')} Score: ${tc(S.score, 'yellow')}`,
+    `  ${tc(lvl.name, 'blue')} ${tdim('│')} ${tc(mode.icon + ' ' + mode.name, 'accent')} ${tdim('│')} Score: ${tc(S.score, 'yellow')} ${tdim('│')} ${tdim('ESC to quit')}`,
     '',
     `  ${dots}`,
     `  Streak: ${S.streak > 0 ? tc(S.streak + ' fire', 'accent') : tdim('0')}`,
@@ -1321,6 +1321,30 @@ function handleInput(value) {
 const input = $('input');
 
 input.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    input.value = '';
+    // Clear any active timers
+    if (S.timer) { clearTimeout(S.timer); S.timer = null; }
+    if (S.rushTimer) { clearInterval(S.rushTimer); S.rushTimer = null; }
+    S.inputEnabled = true;
+    // Route back based on current screen
+    if (S.screen === 'game' || S.screen === 'feedback' || S.screen === 'results') {
+      S.screen = 'modeSelect';
+    } else if (S.screen === 'discovery') {
+      S.screen = 'menu';
+    } else if (S.screen === 'modeSelect') {
+      S.screen = 'levelSelect';
+    } else if (S.screen === 'levelSelect') {
+      S.screen = 'menu';
+    } else if (S.screen === 'progress' || S.screen === 'howToPlay' || S.screen === 'deleteConfirm') {
+      S.screen = 'menu';
+    } else if (S.screen === 'newProfile') {
+      S.screen = 'profiles';
+    }
+    render();
+    return;
+  }
   if (e.key === 'Enter') {
     e.preventDefault();
     const val = input.value;
