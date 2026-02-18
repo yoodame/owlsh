@@ -71,4 +71,4 @@ Words are selected adaptively — lower mastery words appear more frequently. A 
 
 ## Credits
 
-Built at [Common Sense Media](https://www.commonsensemedia.org/) exploring AI-assisted development with [Claude Code](https://claude.ai/claude-code).
+Built exploring AI-assisted development with [Claude Code](https://claude.ai/claude-code).
