@@ -442,6 +442,86 @@ function sndLevelUp() { [523,587,659,698,784].forEach((f,i)=>setTimeout(()=>tone
 function sndTick()    { tone(1000,0.02,'square',0.03); }
 function sndRush()    { tone(440,0.08,'sawtooth',0.06); }
 
+// ─── 8-BIT MUSIC ────────────────────────────────────────────
+// Daft Punk meets Mario Bros — chiptune intro & transitions
+// Lead = square wave (NES pulse channel), Bass = triangle wave,
+// Perc = short noise bursts. All scheduled via Web Audio API.
+function chipNote(freq, start, dur, type = 'square', vol = 0.07) {
+  if (!actx || muted) return;
+  const t = actx.currentTime + start;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.9);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t); o.stop(t + dur);
+}
+function chipNoise(start, dur, vol = 0.04) {
+  if (!actx || muted) return;
+  const t = actx.currentTime + start;
+  const buf = actx.createBuffer(1, actx.sampleRate * dur, actx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const n = actx.createBufferSource(), g = actx.createGain();
+  n.buffer = buf;
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.8);
+  n.connect(g); g.connect(actx.destination);
+  n.start(t); n.stop(t + dur);
+}
+
+// Main intro — plays on first enter (welcome → profiles)
+// ~2.5 sec, 150 BPM, two bars of funky chiptune
+function sndIntro() {
+  if (!actx || muted) return;
+  const bpm = 150, s = 60 / bpm / 4; // sixteenth note duration
+
+  // Lead melody (square) — bouncy Mario-style arpeggio w/ Daft Punk repetition
+  // Bar 1: ascending arpeggio + punchy repeat
+  // Bar 2: variation with higher peak
+  const lead = [
+    // bar 1
+    [523,0],[659,2],[784,4],[1047,5],[784,6],[659,7],
+    [523,8],[659,10],[784,11],[1047,12],[1175,13],[1047,14],
+    // bar 2 — funkier rhythm
+    [784,16],[784,18],[1047,19],[784,20],[659,21],[784,22],
+    [523,24],[659,25],[784,26],[1047,27],[1319,28],[1047,30],
+  ];
+  lead.forEach(([f, p]) => chipNote(f, p * s, s * 1.6, 'square', 0.055));
+
+  // Bass (triangle) — Daft Punk-style pumping root + fifth
+  const bass = [
+    [131,0],[131,4],[196,6],[131,8],[131,12],[196,14],
+    [175,16],[175,20],[196,22],[131,24],[131,28],[196,30],
+  ];
+  bass.forEach(([f, p]) => chipNote(f, p * s, s * 3, 'triangle', 0.09));
+
+  // Percussion — kick + hi-hat pattern
+  for (let i = 0; i < 32; i += 4) chipNoise(i * s, 0.05, 0.06);       // kick
+  for (let i = 2; i < 32; i += 4) chipNoise(i * s, 0.02, 0.025);      // hi-hat
+  for (let i = 8; i < 32; i += 8) chipNoise((i) * s, 0.08, 0.045);    // snare
+}
+
+// Short transition jingle — plays between major screens
+// ~0.6 sec ascending 4-note arpeggio
+function sndTransition() {
+  if (!actx || muted) return;
+  const s = 0.07;
+  [[523,0],[659,1],[784,2],[1047,3]].forEach(([f,p]) =>
+    chipNote(f, p * s, s * 2.5, 'square', 0.045)
+  );
+  chipNote(131, 0, s * 4, 'triangle', 0.06);
+}
+
+// Game start fanfare — quick 3-note punch
+function sndGameStart() {
+  if (!actx || muted) return;
+  chipNote(523, 0, 0.08, 'square', 0.05);
+  chipNote(659, 0.1, 0.08, 'square', 0.05);
+  chipNote(1047, 0.2, 0.2, 'square', 0.06);
+  chipNote(131, 0, 0.3, 'triangle', 0.07);
+}
+
 // ─── STORE (localStorage) ────────────────────────────────────
 const STORE_KEY = 'owlsh_data';
 
@@ -1134,6 +1214,7 @@ function screenDeleteConfirm() {
 // ─── GAME ENGINE ─────────────────────────────────────────────
 
 function startRound() {
+  sndGameStart();
   const levelKey = LEVELS[S.level].key;
   S.words = pickWords(levelKey, S.mode === 3 ? 40 : 10);
   S.wordIdx = 0;
@@ -1221,7 +1302,6 @@ function checkAnswer(answer) {
   const correct = answer.toLowerCase().trim() === word.toLowerCase();
 
   if (correct) {
-    sndCorrect();
     const points = S.attempts === 0 ? 10 : 5;
     S.streak++;
     S.score += points + Math.min(S.streak, 5);
@@ -1284,7 +1364,7 @@ function nextWord() {
     const allWords = Object.values(WORDS).flat();
     profile.stats.wordsLearned = allWords.filter(w => (profile.mastery[w]||{}).stars >= 5).length;
     saveActiveProfile(profile);
-    if (S.correct === S.words.length) sndLevelUp();
+    if (S.correct === S.words.length) sndLevelUp(); else sndTransition();
     S.screen = 'results';
     render();
   } else {
@@ -1331,9 +1411,10 @@ function checkDiscoveryAnswer(answer) {
   const entry = S.discoveryWords[S.discoveryIdx];
   const correct = answer.toLowerCase().trim() === entry.word.toLowerCase();
   S.discoveryResults.push({ word: entry.word, level: entry.level, correct });
-  if (correct) sndCorrect(); else sndWrong();
+  if (!correct) sndWrong();
   S.discoveryIdx++;
   if (S.discoveryIdx >= S.discoveryWords.length) {
+    sndLevelUp(); // Discovery complete fanfare
     render(); // Show results
   } else {
     showDiscoveryWord();
@@ -1463,6 +1544,7 @@ function handleInput(value) {
   switch (S.screen) {
     case 'welcome':
       initAudio();
+      if (!S.introPlayed) { sndIntro(); S.introPlayed = true; }
       S.screen = 'profiles';
       break;
 
@@ -1476,6 +1558,7 @@ function handleInput(value) {
         const idx = parseInt(v) - 1;
         if (idx >= 0 && idx < store.profiles.length) {
           setActiveProfileIndex(idx);
+          sndTransition();
           S.screen = 'menu';
         }
       }
@@ -1490,6 +1573,7 @@ function handleInput(value) {
       } else if (vl === 'go' || vl === 'done' || vl === 'create') {
         const av = AVATARS[S.newAvatar];
         createProfile(S.newName, av.id);
+        sndTransition();
         S.screen = 'menu';
       } else {
         const n = parseInt(v) - 1;
@@ -1585,6 +1669,7 @@ function handleInput(value) {
     case 'discovery':
       if (S.discoveryIdx >= S.discoveryWords.length) {
         // Results screen — press enter to continue
+        sndTransition();
         S.screen = 'menu';
         break;
       }
@@ -1620,8 +1705,14 @@ function goBack() {
   } else if (S.screen === 'newProfile') {
     S.screen = 'profiles';
   } else if (S.screen === 'menu') {
+    const store = loadStore();
+    store.activeProfile = null;
+    saveStore(store);
     S.screen = 'profiles';
   } else if (S.screen === 'profiles') {
+    const store = loadStore();
+    store.activeProfile = null;
+    saveStore(store);
     S.screen = 'welcome';
   }
   render();
@@ -1659,16 +1750,11 @@ window.addEventListener('beforeunload', () => {
   if (S.rushTimer) clearInterval(S.rushTimer);
 });
 
-// ─── SESSION RESTORE ─────────────────────────────────────────
-// On load, skip welcome screen if a profile already exists
+// Restore session: only skip welcome if actively in a profile
 function initScreen() {
   const store = loadStore();
   if (store.activeProfile !== null && store.profiles[store.activeProfile]) {
-    initAudio();
     S.screen = 'menu';
-  } else if (store.profiles.length > 0) {
-    initAudio();
-    S.screen = 'profiles';
   } else {
     S.screen = 'welcome';
   }
@@ -1677,6 +1763,29 @@ function initScreen() {
 initScreen();
 render();
 window.addEventListener('resize', () => { updateW(); render(); });
+
+// Play intro music on welcome screen load
+// Try immediately (works for returning visitors); fallback to first interaction
+if (S.screen === 'welcome') {
+  initAudio();
+  if (actx && actx.state === 'running') {
+    sndIntro();
+    S.introPlayed = true;
+  } else {
+    // Browser blocked autoplay — play on first interaction
+    function onFirstInteraction() {
+      if (!S.introPlayed && S.screen === 'welcome') {
+        initAudio();
+        sndIntro();
+        S.introPlayed = true;
+      }
+      document.removeEventListener('click', onFirstInteraction);
+      document.removeEventListener('touchstart', onFirstInteraction);
+    }
+    document.addEventListener('click', onFirstInteraction);
+    document.addEventListener('touchstart', onFirstInteraction);
+  }
+}
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
