@@ -77,6 +77,7 @@
       </div>
       <span id="back-btn" class="text-t-dim text-xs px-1" onclick="goBack()">◀ back</span>
       <span id="title-bar" class="text-t-dim text-xs flex-1 text-center">owlsh v1.0</span>
+      <span id="mute-btn" class="text-sm px-1 cursor-pointer leading-none" onclick="toggleMute()" style="-webkit-tap-highlight-color:transparent" title="Toggle sound">🔊</span>
     </div>
 
     <!-- Terminal body -->
@@ -205,8 +206,14 @@ function initAudio() {
   if (!actx) actx = new AudioCtx();
   if (actx.state === 'suspended') actx.resume();
 }
+let muted = localStorage.getItem('owlsh_muted') === '1';
+function toggleMute() {
+  muted = !muted;
+  localStorage.setItem('owlsh_muted', muted ? '1' : '0');
+  render();
+}
 function tone(freq, dur, type = 'sine', vol = 0.12) {
-  if (!actx) return;
+  if (!actx || muted) return;
   const o = actx.createOscillator(), g = actx.createGain();
   o.type = type; o.frequency.value = freq;
   g.gain.value = vol;
@@ -1207,6 +1214,8 @@ function render() {
   }
   const hasBack = S.screen !== 'welcome';
   if (backBtn) backBtn.className = hasBack ? 'text-t-dim text-xs px-1 visible' : 'text-t-dim text-xs px-1';
+  const muteBtn = $('mute-btn');
+  if (muteBtn) muteBtn.textContent = muted ? '🔇' : '🔊';
 
   // Scale logo to fit on small screens
   const logoEl = scr.querySelector('.logo-wrap');
@@ -1418,7 +1427,7 @@ input.addEventListener('keydown', (e) => {
 
 // Keep focus on input
 document.addEventListener('click', (e) => {
-  if (!input.disabled && e.target.id !== 'back-btn') input.focus();
+  if (!input.disabled && e.target.id !== 'back-btn' && e.target.id !== 'mute-btn') input.focus();
 });
 
 // Scroll input into view when mobile keyboard opens
