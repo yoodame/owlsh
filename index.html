@@ -1364,6 +1364,10 @@ input.addEventListener('keydown', (e) => {
       S.screen = 'menu';
     } else if (S.screen === 'newProfile') {
       S.screen = 'profiles';
+    } else if (S.screen === 'menu') {
+      S.screen = 'profiles';
+    } else if (S.screen === 'profiles') {
+      S.screen = 'welcome';
     }
     render();
     return;
