@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>owlsh — Sight Words Terminal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            t: {
+              bg: '#0d1117',
+              surface: '#161b22',
+              fg: '#e6edf3',
+              dim: '#484f58',
+              border: '#30363d',
+              accent: '#f4845f',
+              blue: '#58a6ff',
+              green: '#3fb950',
+              red: '#f85149',
+              yellow: '#d29922',
+              purple: '#bc8cff',
+            }
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', '"SF Mono"', '"Cascadia Code"', '"Fira Code"', 'Consolas', 'monospace'],
+          }
+        }
+      },
+      safelist: [
+        'text-t-accent','text-t-blue','text-t-green','text-t-red',
+        'text-t-yellow','text-t-purple','text-t-dim','text-t-fg',
+        'font-bold','animate-pulse','underline','opacity-50',
+        'bg-t-green/20','bg-t-red/20',
+      ]
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+    body { font-family: 'JetBrains Mono', monospace; }
+    .scanlines {
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+      z-index: 10;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .cursor-blink { animation: blink 1s step-end infinite; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.2s ease-out; }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    .shake { animation: shake 0.3s ease-out; }
+    @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: popIn 0.25s ease-out; }
+    pre { tab-size: 2; }
+    #input:focus { outline: none; }
+    ::selection { background: rgba(244,132,95,0.3); }
+  </style>
+</head>
+<body class="bg-t-bg min-h-screen flex items-start justify-center p-3 sm:p-8 selection:bg-t-accent/30">
+  <div class="w-full max-w-[68ch]">
+    <!-- Terminal title bar -->
+    <div class="flex items-center gap-2 px-4 py-2 bg-t-surface rounded-t-lg border border-t-border">
+      <div class="flex gap-1.5">
+        <div class="w-2.5 h-2.5 rounded-full bg-t-red/80"></div>
+        <div class="w-2.5 h-2.5 rounded-full bg-t-yellow/80"></div>
+        <div class="w-2.5 h-2.5 rounded-full bg-t-green/80"></div>
+      </div>
+      <span id="title-bar" class="text-t-dim text-xs flex-1 text-center">owlsh v1.0</span>
+    </div>
+
+    <!-- Terminal body -->
+    <div class="border border-t-0 border-t-border rounded-b-lg bg-t-bg relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none scanlines"></div>
+      <pre id="screen" class="px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[13px] sm:text-[15px] leading-[1.6] min-h-[55vh] sm:min-h-[60vh] whitespace-pre-wrap fade-in"></pre>
+      <div id="input-bar" class="flex items-center px-4 sm:px-6 py-3 border-t border-t-border">
+        <span class="text-t-accent font-bold mr-2 text-sm sm:text-base">❯</span>
+        <input
+          id="input"
+          type="text"
+          class="bg-transparent text-t-fg text-sm sm:text-base outline-none flex-1 caret-t-accent placeholder:text-t-dim/40 font-mono"
+          autofocus
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="Type here..."
+        />
+      </div>
+    </div>
+    <div class="text-center mt-2 text-t-dim text-[10px]">built with care at Common Sense Media</div>
+  </div>
+
+<script>
+// ═════════════════════════════════════════════════════════════
+//  owlsh — Sight Words Terminal Game
+//  All game modes • Adaptive difficulty • Profile tracking
+// ═════════════════════════════════════════════════════════════
+
+// ─── WORD DATA ───────────────────────────────────────────────
+const LEVELS = [
+  { key: 'hatchling', name: 'Hatchling',  icon: '🥒', desc: 'Just starting out' },
+  { key: 'fledgling', name: 'Fledgling',  icon: '🐣', desc: 'Learning the basics' },
+  { key: 'flyer',     name: 'Flyer',      icon: '🐥', desc: 'Taking flight' },
+  { key: 'soarer',    name: 'Soarer',     icon: '🦅', desc: 'Riding the winds' },
+  { key: 'owl',       name: 'Owl Master', icon: '🦉', desc: 'Wise and masterful' },
+];
+
+const WORDS = {
+  hatchling: ['a','and','away','big','blue','can','come','down','find','for','funny','go','help','here','I','in','is','it','jump','little','look','make','me','my','not','one','play','red','run','said','see','the','three','to','two','up','we','where','yellow','you'],
+  fledgling: ['all','am','are','at','ate','be','black','brown','but','came','did','do','eat','four','get','good','have','he','into','like','must','new','no','now','on','our','out','please','pretty','ran','ride','saw','say','she','so','soon','that','there','they','this','too','under','want','was','well','went','what','white','who','will','with','yes'],
+  flyer: ['after','again','an','any','as','ask','by','could','every','fly','from','give','going','had','has','her','him','his','how','just','know','let','live','may','of','old','once','open','over','put','round','some','stop','take','thank','them','then','think','walk','were','when'],
+  soarer: ['always','around','because','been','before','best','both','buy','call','cold','does','fast','first','five','found','gave','goes','green','its','made','many','off','or','pull','read','right','sing','sit','sleep','tell','their','these','those','upon','us','use','very','wash','which','why','wish','work','would','write','your'],
+  owl: ['about','better','bring','carry','clean','cut','done','draw','drink','eight','fall','far','full','got','grow','hold','hot','hurt','if','keep','kind','laugh','light','long','much','myself','never','only','own','pick','seven','shall','show','six','small','start','ten','today','together','try','warm'],
+};
+
+const SENTENCES = {
+  // Hatchling
+  a:'I see ___ cat.',and:'Mom ___ Dad are here.',away:'Go ___!',big:'That is a ___ house.',blue:'The sky is ___.',can:'I ___ jump high.',come:'___ here please!',down:'Sit ___.',find:'Can you ___ it?',for:'This is ___ you.',funny:'That is so ___!',go:'Let us ___!',help:'Can you ___ me?',here:'Come over ___.',I:'___ am happy today.',in:'The cat is ___ the box.',is:'She ___ my friend.',it:'I like ___.',jump:'I can ___ high.',little:'The ___ bird sings.',look:'___ at that!',make:'Let us ___ a cake.',me:'Give it to ___.',my:'This is ___ book.',not:'I am ___ sad.',one:'I have ___ apple.',play:'Let us ___!',red:'I see a ___ ball.',run:'I can ___ fast.',said:'She ___ hello.',see:'I can ___ you.',the:'___ dog is big.',three:'I have ___ cats.',to:'I want ___ go.',two:'I have ___ hands.',up:'Look ___!',we:'___ are friends.',where:'___ is the cat?',yellow:'The ___ sun shines.',you:'I like ___.',
+  // Fledgling
+  all:'We ___ went home.',am:'I ___ right here.',are:'You ___ so smart.',at:'Look ___ the bird.',ate:'I ___ my lunch.',be:'I want to ___ kind.',black:'The ___ cat sat.',brown:'A ___ bear sleeps.',but:'I like it ___ not now.',came:'She ___ to play.',did:'What ___ you do?',do:'What ___ you see?',eat:'I want to ___.',four:'I have ___ toys.',get:'I need to ___ my bag.',good:'That was ___!',have:'I ___ a dog.',he:'___ is my friend.',into:'Jump ___ the pool.',like:'I ___ to read.',must:'You ___ be kind.',new:'I got a ___ toy.',no:'___  thank you.',now:'Let us go ___.',on:'The book is ___ the table.',our:'This is ___ house.',out:'Let us go ___.',please:'Can I have some ___?',pretty:'What a ___ flower!',ran:'The dog ___ fast.',ride:'I want to ___ my bike.',saw:'I ___ a bird.',say:'What did you ___?',she:'___ is my sister.',so:'I am ___ happy!',soon:'We will go ___.',that:'I like ___ one.',there:'Look over ___!',they:'___ are playing.',this:'I want ___ one.',too:'I want to come ___!',under:'The cat is ___ the bed.',want:'I ___ to play.',was:'It ___ so fun.',well:'I feel ___.',went:'We ___ to the park.',what:'___ is that?',white:'A ___ rabbit hops.',who:'___ is that?',will:'I ___ help you.',with:'Come ___ me.',yes:'___  I can!',
+  // Flyer
+  after:'We play ___ lunch.',again:'Do it ___!',an:'I ate ___ apple.',any:'Do you have ___ pets?',as:'Fast ___ the wind!',ask:'I want to ___ you.',by:'Sit ___ me.',could:'I ___ hear the music.',every:'I read ___ day.',fly:'Birds can ___.',from:'A letter ___ Grandma.',give:'I will ___ you one.',going:'I am ___ home.',had:'I ___ a fun day.',has:'She ___ a red hat.',her:'That is ___ book.',him:'I gave it to ___.',his:'That is ___ dog.',how:'___ are you today?',just:'I ___ got here.',know:'I ___ the answer!',let:'___ me try it.',live:'I ___ in a house.',may:'You ___ go now.',of:'A cup ___ water.',old:'The ___ tree is tall.',once:'I went there ___.',open:'Please ___ the door.',over:'Jump ___ the rock.',put:'___ it down gently.',round:'The ball is ___.',some:'I want ___ water.',stop:'Please ___ running.',take:'___ my hand.',thank:'___ you so much!',them:'I gave it to ___.',then:'First eat ___ play.',think:'I ___ it is fun.',walk:'Let us ___ to school.',were:'They ___ very happy.',when:'___ is your birthday?',
+  // Soarer
+  always:'I ___ brush my teeth.',around:'We ran ___ the park.',because:'I smiled ___ I was happy.',been:'I have ___ there before.',before:'Wash hands ___ you eat.',best:'You are the ___!',both:'We ___ like dogs.',buy:'I want to ___ a book.',call:'I will ___ my friend.',cold:'The water is ___.',does:'She ___ her homework.',fast:'The rabbit runs ___.',first:'I was ___ in line.',five:'I have ___ fingers.',found:'I ___ my toy!',gave:'She ___ me a hug.',goes:'He ___ to school.',green:'The frog is ___.',its:'The dog wagged ___ tail.',made:'I ___ a drawing.',many:'How ___ do you have?',off:'Turn ___ the light.',or:'Milk ___ water?',pull:'___ the door open.',read:'I love to ___ books.',right:'You got it ___!',sing:'I like to ___ songs.',sit:'Please ___ down.',sleep:'I need to ___.',tell:'Please ___ me a story.',their:'That is ___ house.',these:'I like ___ shoes.',those:'Look at ___ birds.',upon:'Once ___ a time.',us:'Come play with ___.',use:'I can ___ a pencil.',very:'I am ___ happy.',wash:'Please ___ your hands.',which:'___ one do you want?',why:'___ is the sky blue?',wish:'I ___ for a puppy.',work:'Let us ___ together.',would:'I ___ like some cake.',write:'I can ___ my name.',your:'Is this ___ book?',
+  // Owl
+  about:'Tell me ___ your day.',better:'I feel ___ now.',bring:'Please ___ your book.',carry:'I can ___ the bag.',clean:'My room is ___.',cut:'I will ___ the paper.',done:'Are you ___ yet?',draw:'I like to ___.',drink:'I need a ___ of water.',eight:'I am ___ years old.',fall:'Leaves ___ in autumn.',far:'The park is not ___.',full:'The cup is ___.',got:'I ___ a new toy!',grow:'Plants ___ in the sun.',hold:'Please ___ my hand.',hot:'The soup is ___.',hurt:'I hope it does not ___.',if:'We can go ___ it is sunny.',keep:'I will ___ it safe.',kind:'She is very ___.',laugh:'That joke made me ___.',light:'Turn on the ___.',long:'It has been a ___ day.',much:'Thank you so ___!',myself:'I did it all by ___!',never:'I have ___ seen snow.',only:'I have ___ one left.',own:'I have my ___ room.',pick:'Please ___ a color.',seven:'There are ___ days.',shall:'We ___ go together.',show:'Let me ___ you.',six:'I have ___ crayons.',small:'The mouse is ___.',start:'Let us ___ the game!',ten:'I can count to ___.',today:'I am happy ___.',together:'We play ___.',try:'I will ___ my best.',warm:'The sun feels ___.',
+};
+
+// ─── ASCII ART ───────────────────────────────────────────────
+const OWL = {
+  idle: `       ◇
+      ╱ ╲
+    ╱ ◉ ◉ ╲
+    ╲  ▾  ╱
+     ╰───╯
+      ╱ ╲
+     ╱╱ ╲╲`,
+  happy: `       ◇
+      ╱ ╲
+    ╱ ◕‿◕ ╲
+    ╲     ╱
+     ╰───╯
+      ╱ ╲
+     ╱╱ ╲╲`,
+  celebrate: `    ✦  ◇  ✦
+     ╲╱ ╲╱
+    ╱ ◕◡◕ ╲
+    ╲     ╱
+     ╰───╯
+     ╱╱ ╲╲
+    ╱╱   ╲╲`,
+  think: `       ◇  · ·
+      ╱ ╲  ·
+    ╱ ◉ ◉ ╲
+    ╲  -  ╱
+     ╰───╯
+      ╱ ╲
+     ╱╱ ╲╲`,
+  encourage: `       ◇
+      ╱ ╲
+    ╱ ◉_◉ ╲
+    ╲  ◡  ╱
+     ╰───╯
+      ╱ ╲
+     ╱╱ ╲╲`,
+};
+
+const AVATARS = [
+  { id: 'owl',    face: '{◉,◉}', name: 'Owl' },
+  { id: 'cat',    face: '(^.^)',  name: 'Cat' },
+  { id: 'bear',   face: 'ʕ•ᴥ•ʔ', name: 'Bear' },
+  { id: 'bunny',  face: '(◕.◕)', name: 'Bunny' },
+  { id: 'fox',    face: '(•ᴗ•)', name: 'Fox' },
+];
+
+const CHEERS = ['Amazing!','Fantastic!','Brilliant!','Superb!','Nailed it!','Perfect!','Outstanding!','Wonderful!','Great job!','You rock!'];
+const NUDGES = ['Almost!','Try again!','So close!','You got this!','Keep going!','One more try!','Almost there!','Don\'t give up!'];
+
+const MODES = [
+  { key: 'flash',    name: 'Flash',    icon: '✦', desc: 'See it, remember it, type it' },
+  { key: 'fill',     name: 'Fill',     icon: '◧', desc: 'Complete the missing letters' },
+  { key: 'scramble', name: 'Scramble', icon: '◈', desc: 'Unscramble the jumbled letters' },
+  { key: 'rush',     name: 'Rush',     icon: '▶', desc: 'Type fast — beat the clock!' },
+  { key: 'story',    name: 'Story',    icon: '▤', desc: 'Fill the blank in a sentence' },
+];
+
+// ─── AUDIO ───────────────────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx;
+function initAudio() {
+  if (!actx) actx = new AudioCtx();
+  if (actx.state === 'suspended') actx.resume();
+}
+function tone(freq, dur, type = 'sine', vol = 0.12) {
+  if (!actx) return;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.value = vol;
+  g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(); o.stop(actx.currentTime + dur);
+}
+function sndCorrect() { tone(523,0.1); setTimeout(()=>tone(659,0.1),70); setTimeout(()=>tone(784,0.15),140); }
+function sndWrong()   { tone(220,0.25,'triangle',0.08); }
+function sndLevelUp() { [523,587,659,698,784].forEach((f,i)=>setTimeout(()=>tone(f,0.12),i*90)); }
+function sndTick()    { tone(1000,0.02,'square',0.03); }
+function sndRush()    { tone(440,0.08,'sawtooth',0.06); }
+
+// ─── STORE (localStorage) ────────────────────────────────────
+const STORE_KEY = 'owlsh_data';
+
+function loadStore() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || { profiles: [], activeProfile: null }; }
+  catch { return { profiles: [], activeProfile: null }; }
+}
+
+function saveStore(data) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(data));
+}
+
+function getActiveProfile() {
+  const store = loadStore();
+  if (store.activeProfile === null) return null;
+  return store.profiles[store.activeProfile] || null;
+}
+
+function saveActiveProfile(profile) {
+  const store = loadStore();
+  if (store.activeProfile !== null) {
+    store.profiles[store.activeProfile] = profile;
+    saveStore(store);
+  }
+}
+
+function createProfile(name, avatarId) {
+  const store = loadStore();
+  const profile = {
+    name,
+    avatar: avatarId,
+    level: null, // null = needs discovery
+    mastery: {},  // { word: { seen, correct, streak, stars } }
+    stats: { totalScore: 0, wordsLearned: 0, sessionsPlayed: 0, bestStreak: 0 },
+    created: Date.now(),
+  };
+  store.profiles.push(profile);
+  store.activeProfile = store.profiles.length - 1;
+  saveStore(store);
+  return profile;
+}
+
+function setActiveProfileIndex(idx) {
+  const store = loadStore();
+  store.activeProfile = idx;
+  saveStore(store);
+}
+
+function getWordMastery(profile, word) {
+  return profile.mastery[word] || { seen: 0, correct: 0, streak: 0, stars: 0 };
+}
+
+function updateMastery(profile, word, wasCorrect) {
+  const m = getWordMastery(profile, word);
+  m.seen++;
+  if (wasCorrect) {
+    m.correct++;
+    m.streak++;
+    if (m.streak >= 3 && m.stars < 5) m.stars = Math.min(5, m.stars + 1);
+  } else {
+    m.streak = 0;
+    if (m.stars > 0) m.stars = Math.max(0, m.stars - 1);
+  }
+  profile.mastery[word] = m;
+  saveActiveProfile(profile);
+}
+
+// ─── STATE ───────────────────────────────────────────────────
+let S = {
+  screen: 'welcome',
+  // profile creation
+  newName: '',
+  newAvatar: 0,
+  // game
+  level: 0,
+  mode: 0,
+  words: [],
+  wordIdx: 0,
+  score: 0,
+  streak: 0,
+  bestStreak: 0,
+  correct: 0,
+  results: [],
+  phase: 'show', // flash mode: 'show' | 'type'
+  attempts: 0,
+  hint: '',
+  timer: null,
+  // rush mode
+  rushTime: 60,
+  rushTimer: null,
+  rushActive: false,
+  // discovery
+  discoveryWords: [],
+  discoveryResults: [],
+  discoveryIdx: 0,
+  discoveryPhase: 'show',
+  // feedback
+  lastCorrect: false,
+  lastWord: '',
+  // misc
+  inputEnabled: true,
+  deleteConfirm: false,
+};
+
+// ─── UI HELPERS ──────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const W = 58; // content width in characters
+
+function tc(text, color) { return `<span class="text-t-${color}">${text}</span>`; }
+function tb(text) { return `<span class="font-bold">${text}</span>`; }
+function tdim(text) { return tc(text, 'dim'); }
+
+function center(text) {
+  const stripped = text.replace(/<[^>]*>/g, '');
+  const pad = Math.max(0, Math.floor((W - stripped.length) / 2));
+  return ' '.repeat(pad) + text;
+}
+
+function hr(ch = '─') { return tdim(ch.repeat(W)); }
+
+function progressBar(cur, total, w = 20) {
+  const filled = Math.round((cur / Math.max(total, 1)) * w);
+  return tc('█'.repeat(filled), 'green') + tdim('░'.repeat(w - filled));
+}
+
+function stars(n, max = 5) {
+  return tc('★'.repeat(n), 'yellow') + tdim('☆'.repeat(max - n));
+}
+
+function opt(key, label) {
+  return `  ${tc('[' + key + ']', 'yellow')}  ${label}`;
+}
+
+function owlArt(mood = 'idle') { return OWL[mood] || OWL.idle; }
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ─── WORD SELECTION ──────────────────────────────────────────
+function pickWords(levelKey, count = 10) {
+  const profile = getActiveProfile();
+  const pool = [...WORDS[levelKey]];
+  // Sort by mastery (ascending) so weaker words appear first
+  pool.sort((a, b) => {
+    const mA = getWordMastery(profile, a).stars;
+    const mB = getWordMastery(profile, b).stars;
+    if (mA !== mB) return mA - mB;
+    return Math.random() - 0.5;
+  });
+  return shuffle(pool.slice(0, Math.min(count, pool.length)));
+}
+
+function makeMissing(word) {
+  const chars = word.split('');
+  const hide = Math.max(1, Math.ceil(chars.length * 0.4));
+  const idxs = shuffle(chars.map((_, i) => i)).slice(0, hide);
+  const set = new Set(idxs);
+  return chars.map((c, i) => set.has(i) ? '_' : c).join('');
+}
+
+function makeScramble(word) {
+  if (word.length <= 2) return word.split('').reverse().join('');
+  let s; let tries = 0;
+  do { s = shuffle(word.split('')).join(''); tries++; } while (s === word && tries < 30);
+  return s;
+}
+
+// ─── SCREENS ─────────────────────────────────────────────────
+
+function screenWelcome() {
+  return [
+    '',
+    center(tc('◇', 'accent')),
+    '',
+    center(tc('┌─────────────────────────────────┐', 'dim')),
+    center(tc('│', 'dim') + tc('    o w l s h ', 'accent') + '                   ' + tc('│', 'dim')),
+    center(tc('│', 'dim') + tdim('    sight words terminal         ') + tc('│', 'dim')),
+    center(tc('└─────────────────────────────────┘', 'dim')),
+    '',
+    owlArt('idle').split('\n').map(l => center(l)).join('\n'),
+    '',
+    center(tc('Learn sight words, one keystroke at a time.', 'dim')),
+    '',
+    center(tc('Press ENTER to begin', 'accent') + ' ' + tc('█', 'accent cursor-blink')),
+    '',
+  ].join('\n');
+}
+
+function screenProfiles() {
+  const store = loadStore();
+  const profiles = store.profiles;
+  let lines = ['', tb('  Who is playing?'), ''];
+
+  if (profiles.length === 0) {
+    lines.push('  No profiles yet. Let\'s create one!');
+    lines.push('');
+    lines.push(opt('1', 'Create new profile'));
+  } else {
+    profiles.forEach((p, i) => {
+      const av = AVATARS.find(a => a.id === p.avatar) || AVATARS[0];
+      const lvl = p.level !== null ? LEVELS[p.level].name : 'New';
+      lines.push(opt(i + 1, `${av.face}  ${p.name}  ${tdim('(' + lvl + ')')}`));
+    });
+    lines.push('');
+    if (profiles.length < 5) {
+      lines.push(opt('+', 'Create new profile'));
+    }
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+function screenNewProfile() {
+  let lines = ['', tb('  Create Your Profile'), '', hr()];
+
+  if (!S.newName) {
+    lines.push('');
+    lines.push('  What should I call you?');
+    lines.push('');
+    lines.push(tdim('  Type your name and press ENTER'));
+    lines.push('');
+  } else {
+    lines.push('');
+    lines.push(`  Name: ${tc(S.newName, 'accent')}`);
+    lines.push('');
+    lines.push('  Pick your avatar:');
+    lines.push('');
+    AVATARS.forEach((a, i) => {
+      const sel = i === S.newAvatar ? tc(' ◀', 'accent') : '';
+      lines.push(opt(i + 1, `${a.face}  ${a.name}${sel}`));
+    });
+    lines.push('');
+    lines.push(hr());
+    lines.push('');
+    lines.push(opt('go', `Create profile as ${tc(S.newName, 'accent')}`));
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+function screenMenu() {
+  const profile = getActiveProfile();
+  if (!profile) return screenProfiles();
+  const av = AVATARS.find(a => a.id === profile.avatar) || AVATARS[0];
+  const lvlInfo = profile.level !== null ? LEVELS[profile.level] : null;
+  const allWords = Object.values(WORDS).flat();
+  const mastered = allWords.filter(w => (profile.mastery[w]||{}).stars >= 5).length;
+
+  let lines = [
+    '',
+    `  ${av.face}  ${tc('Welcome back, ' + profile.name + '!', 'accent')}`,
+    '',
+  ];
+
+  if (lvlInfo) {
+    lines.push(`  Level: ${tc(lvlInfo.icon + ' ' + lvlInfo.name, 'blue')}  ${tdim('|')}  Mastered: ${tc(mastered + '/' + allWords.length, 'green')}`);
+    lines.push(`  ${progressBar(mastered, allWords.length, 30)}`);
+  } else {
+    lines.push(`  ${tc('New player — take the Skill Discovery to find your level!', 'yellow')}`);
+  }
+
+  lines.push('');
+  lines.push(hr());
+  lines.push('');
+  lines.push(opt('1', `${tc('▶', 'green')} Play`));
+  lines.push(opt('2', `${tc('◇', 'blue')} Skill Discovery`));
+  lines.push(opt('3', `${tc('▦', 'purple')} Progress`));
+  lines.push(opt('4', `${tc('?', 'yellow')} How to Play`));
+  lines.push('');
+  lines.push(hr());
+  lines.push('');
+  lines.push(`  ${tdim('[p] Switch profile')}  ${tdim('[x] Delete profile')}`);
+  lines.push('');
+  return lines.join('\n');
+}
+
+function screenLevelSelect() {
+  const profile = getActiveProfile();
+  let lines = ['', tb('  Choose Your Level'), ''];
+
+  LEVELS.forEach((lvl, i) => {
+    const words = WORDS[lvl.key];
+    const mastered = words.filter(w => (profile.mastery[w]||{}).stars >= 5).length;
+    const pct = Math.round((mastered / words.length) * 100);
+    const current = profile.level === i ? tc(' ◀ current', 'accent') : '';
+    lines.push(opt(i + 1, `${lvl.icon} ${lvl.name.padEnd(12)} ${progressBar(mastered, words.length, 12)} ${tc(pct + '%', pct === 100 ? 'green' : 'dim')}${current}`));
+  });
+
+  lines.push('');
+  lines.push(hr());
+  lines.push(opt('0', tdim('Back')));
+  lines.push('');
+  return lines.join('\n');
+}
+
+function screenModeSelect() {
+  const lvl = LEVELS[S.level];
+  let lines = [
+    '',
+    `  Level: ${tc(lvl.icon + ' ' + lvl.name, 'blue')}`,
+    '',
+    tb('  Choose Game Mode'),
+    '',
+  ];
+
+  MODES.forEach((m, i) => {
+    lines.push(opt(i + 1, `${tc(m.icon, 'accent')} ${m.name}`));
+    lines.push(`       ${tdim(m.desc)}`);
+    lines.push('');
+  });
+
+  lines.push(hr());
+  lines.push(opt('0', tdim('Back')));
+  lines.push('');
+  return lines.join('\n');
+}
+
+function screenGame() {
+  const word = S.words[S.wordIdx];
+  const mode = MODES[S.mode];
+  const lvl = LEVELS[S.level];
+
+  // Progress dots
+  const dots = S.words.map((_, i) => {
+    if (i < S.wordIdx) return S.results[i]?.correct ? tc('●', 'green') : tc('●', 'red');
+    if (i === S.wordIdx) return tc('◉', 'accent');
+    return tdim('○');
+  }).join(' ');
+
+  let lines = [
+    `  ${tc(lvl.name, 'blue')} ${tdim('│')} ${tc(mode.icon + ' ' + mode.name, 'accent')} ${tdim('│')} Score: ${tc(S.score, 'yellow')}`,
+    '',
+    `  ${dots}`,
+    `  Streak: ${S.streak > 0 ? tc(S.streak + ' fire', 'accent') : tdim('0')}`,
+    '',
+    hr(),
+  ];
+
+  if (S.mode === 0) { // Flash
+    if (S.phase === 'show') {
+      lines.push('');
+      lines.push(center(tdim('Look at this word:')));
+      lines.push('');
+      lines.push(center(tc(tb(word.toUpperCase()), 'fg')));
+      lines.push('');
+      lines.push(center(tdim('Remember it...')));
+      lines.push('');
+    } else {
+      lines.push('');
+      lines.push(center(tc('What was the word?', 'blue')));
+      lines.push('');
+      if (S.attempts > 0) {
+        lines.push(center(tc(rand(NUDGES), 'yellow')));
+        if (S.attempts >= 1) {
+          const hint = word[0] + '_'.repeat(Math.max(0, word.length - 2)) + (word.length > 1 ? word[word.length-1] : '');
+          lines.push(center(tdim('Hint: ' + hint.split('').join(' '))));
+        }
+        lines.push('');
+      }
+    }
+  } else if (S.mode === 1) { // Fill
+    lines.push('');
+    lines.push(center(tdim('Complete the word:')));
+    lines.push('');
+    lines.push(center(tc(tb(S.hint.split('').join(' ')), 'fg')));
+    lines.push('');
+    if (S.attempts > 0) {
+      lines.push(center(tc(rand(NUDGES), 'yellow')));
+      lines.push('');
+    }
+  } else if (S.mode === 2) { // Scramble
+    lines.push('');
+    lines.push(center(tdim('Unscramble the letters:')));
+    lines.push('');
+    lines.push(center(tc(tb(S.hint.split('').join(' ')), 'purple')));
+    lines.push(center(tdim(`(${word.length} letters)`)));
+    lines.push('');
+    if (S.attempts > 0) {
+      lines.push(center(tc(rand(NUDGES), 'yellow')));
+      lines.push('');
+    }
+  } else if (S.mode === 3) { // Rush
+    const bar = progressBar(S.rushTime, 60, 30);
+    lines = [
+      `  ${tc('▶ RUSH', 'accent')} ${tdim('│')} ${bar} ${tc(S.rushTime + 's', S.rushTime <= 10 ? 'red' : 'blue')}`,
+      '',
+      `  Score: ${tc(S.score, 'yellow')}  Streak: ${S.streak > 0 ? tc(S.streak, 'accent') : tdim('0')}`,
+      '',
+      hr(),
+      '',
+    ];
+    if (S.rushActive) {
+      lines.push(center(tc(tb(word.toUpperCase()), 'fg')));
+      lines.push('');
+      if (S.attempts > 0) {
+        lines.push(center(tc('Nope! Try again.', 'red')));
+        lines.push('');
+      }
+    } else {
+      lines.push(center(tc('Time is up!', 'yellow')));
+      lines.push('');
+      lines.push(center(`You typed ${tc(S.correct, 'green')} words correctly!`));
+      lines.push(center(`Score: ${tc(S.score, 'yellow')}  Best streak: ${tc(S.bestStreak, 'accent')}`));
+      lines.push('');
+      lines.push(hr());
+      lines.push('');
+      lines.push(opt('1', 'Play again'));
+      lines.push(opt('2', 'Change mode'));
+      lines.push(opt('0', 'Menu'));
+      lines.push('');
+    }
+  } else if (S.mode === 4) { // Story
+    const sentence = SENTENCES[word] || `The word is ___.`;
+    const display = sentence.replace('___', tc(tb('___'), 'accent'));
+    lines.push('');
+    lines.push(center(tdim('Fill in the blank:')));
+    lines.push('');
+    lines.push(`    "${display}"`);
+    lines.push('');
+    if (S.attempts > 0) {
+      lines.push(center(tc(rand(NUDGES), 'yellow')));
+      lines.push('');
+    }
+  }
+
+  return lines.join('\n');
+}
+
+function screenFeedback() {
+  let lines = [];
+  if (S.lastCorrect) {
+    lines.push('');
+    lines.push(owlArt('happy').split('\n').map(l => center(l)).join('\n'));
+    lines.push('');
+    lines.push(center(tc('✓ ' + rand(CHEERS), 'green')));
+    lines.push('');
+    lines.push(center(tc(tb(S.lastWord.toUpperCase()), 'fg')));
+    if (S.streak > 1) {
+      lines.push('');
+      lines.push(center(tc(S.streak + ' in a row!', 'accent')));
+    }
+  } else {
+    lines.push('');
+    lines.push(owlArt('encourage').split('\n').map(l => center(l)).join('\n'));
+    lines.push('');
+    lines.push(center(tdim('The word was:')));
+    lines.push('');
+    lines.push(center(tc(tb(S.lastWord.toUpperCase()), 'fg')));
+    lines.push('');
+    lines.push(center(tc('You\'ll get it next time!', 'yellow')));
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+function screenResults() {
+  const profile = getActiveProfile();
+  const pct = Math.round((S.correct / Math.max(S.words.length, 1)) * 100);
+  const mood = pct >= 80 ? 'celebrate' : pct >= 50 ? 'happy' : 'encourage';
+
+  let lines = [
+    '',
+    owlArt(mood).split('\n').map(l => center(l)).join('\n'),
+    '',
+    center(tc(tb('Round Complete!'), 'accent')),
+    '',
+    `  Score: ${tc(S.score, 'yellow')}    Correct: ${tc(S.correct + '/' + S.words.length, pct >= 80 ? 'green' : 'blue')}    Streak: ${tc(S.bestStreak, 'accent')}`,
+    '',
+    hr(),
+    '',
+  ];
+
+  S.results.forEach(r => {
+    const icon = r.correct ? tc('✓', 'green') : tc('✗', 'red');
+    const m = getWordMastery(profile, r.word);
+    lines.push(`  ${icon}  ${r.word.padEnd(12)} ${stars(m.stars)}`);
+  });
+
+  lines.push('');
+  lines.push(hr());
+  lines.push('');
+  lines.push(opt('1', 'Play again'));
+  lines.push(opt('2', 'Change mode'));
+  lines.push(opt('3', 'Change level'));
+  lines.push(opt('0', 'Menu'));
+  lines.push('');
+  return lines.join('\n');
+}
+
+function screenProgress() {
+  const profile = getActiveProfile();
+  const av = AVATARS.find(a => a.id === profile.avatar) || AVATARS[0];
+  let lines = [
+    '',
+    `  ${av.face}  ${tc(profile.name + '\'s Progress', 'accent')}`,
+    '',
+    hr(),
+    '',
+  ];
+
+  let totalMastered = 0;
+  let totalWords = 0;
+
+  LEVELS.forEach((lvl, i) => {
+    const words = WORDS[lvl.key];
+    totalWords += words.length;
+    const mastered = words.filter(w => (profile.mastery[w]||{}).stars >= 5).length;
+    totalMastered += mastered;
+    const practiced = words.filter(w => (profile.mastery[w]||{}).seen > 0).length;
+    const pct = Math.round((mastered / words.length) * 100);
+    const current = profile.level === i ? tc(' ◀', 'accent') : '';
+
+    lines.push(`  ${tc(lvl.icon + ' ' + lvl.name, 'blue')}${current}  ${tdim('(' + words.length + ' words)')}`);
+    lines.push(`  ${progressBar(mastered, words.length, 25)} ${tc(pct + '%', pct === 100 ? 'green' : 'dim')}`);
+    lines.push(`  ${tc(mastered + ' mastered', 'green')} ${tdim('|')} ${tc(practiced + ' practiced', 'dim')}`);
+    lines.push('');
+  });
+
+  lines.push(hr());
+  lines.push('');
+  lines.push(`  Total: ${tc(totalMastered + '/' + totalWords + ' words mastered', 'green')}`);
+  lines.push(`  Sessions: ${tc(profile.stats.sessionsPlayed, 'blue')}  Total Score: ${tc(profile.stats.totalScore, 'yellow')}  Best Streak: ${tc(profile.stats.bestStreak, 'accent')}`);
+  lines.push('');
+  lines.push(hr());
+  lines.push(opt('0', tdim('Back')));
+  lines.push('');
+  return lines.join('\n');
+}
+
+function screenHowToPlay() {
+  let lines = [
+    '',
+    tb('  How to Play'),
+    '',
+    hr(),
+    '',
+    `  ${tc('✦ Flash', 'accent')}`,
+    `  A word flashes on screen. After it`,
+    `  disappears, type it from memory!`,
+    '',
+    `  ${tc('◧ Fill', 'accent')}`,
+    `  Some letters are replaced with ${tc('_', 'fg')}.`,
+    `  Type the complete word.`,
+    '',
+    `  ${tc('◈ Scramble', 'accent')}`,
+    `  Letters are jumbled up. Figure out`,
+    `  the word and type it correctly.`,
+    '',
+    `  ${tc('▶ Rush', 'accent')}`,
+    `  60 seconds on the clock! Type as`,
+    `  many words as you can, as fast as`,
+    `  you can. Build streaks for bonuses!`,
+    '',
+    `  ${tc('▤ Story', 'accent')}`,
+    `  Read a sentence with a blank.`,
+    `  Type the missing word.`,
+    '',
+    hr(),
+    '',
+    `  ${tc('Scoring:', 'yellow')}`,
+    `  First try: ${tc('+10', 'green')}  Second try: ${tc('+5', 'blue')}`,
+    `  Streak bonus: ${tc('+1 per word', 'accent')} in streak`,
+    '',
+    `  ${tc('Mastery:', 'yellow')}`,
+    `  Get a word right 3 times in a row`,
+    `  across sessions to earn ${tc('★', 'yellow')} stars.`,
+    `  5 stars = fully mastered!`,
+    '',
+    hr(),
+    opt('0', tdim('Back')),
+    '',
+  ];
+  return lines.join('\n');
+}
+
+function screenDiscovery() {
+  const total = S.discoveryWords.length;
+  const idx = S.discoveryIdx;
+
+  if (idx >= total) {
+    // Show results
+    const scores = [0,0,0,0,0]; // per level
+    S.discoveryResults.forEach(r => { if (r.correct) scores[r.level]++; });
+    // Find highest level where they got 2+ correct
+    let bestLevel = 0;
+    for (let i = 4; i >= 0; i--) {
+      if (scores[i] >= 2) { bestLevel = i; break; }
+    }
+
+    const profile = getActiveProfile();
+    profile.level = bestLevel;
+    saveActiveProfile(profile);
+
+    let lines = [
+      '',
+      owlArt('celebrate').split('\n').map(l => center(l)).join('\n'),
+      '',
+      center(tc(tb('Discovery Complete!'), 'accent')),
+      '',
+    ];
+    LEVELS.forEach((lvl, i) => {
+      const s = scores[i];
+      const bar = tc('●'.repeat(s), 'green') + tdim('○'.repeat(3 - s));
+      const chosen = i === bestLevel ? tc(' ◀ Your level!', 'accent') : '';
+      lines.push(`  ${lvl.icon} ${lvl.name.padEnd(12)} ${bar}${chosen}`);
+    });
+    lines.push('');
+    lines.push(center(`You are a ${tc(tb(LEVELS[bestLevel].icon + ' ' + LEVELS[bestLevel].name), 'blue')}!`));
+    lines.push('');
+    lines.push(center(tdim('Press ENTER to continue')));
+    lines.push('');
+    return lines.join('\n');
+  }
+
+  const word = S.discoveryWords[idx];
+  const dots = S.discoveryWords.map((_, i) => {
+    if (i < idx) return S.discoveryResults[i]?.correct ? tc('●', 'green') : tc('●', 'red');
+    if (i === idx) return tc('◉', 'accent');
+    return tdim('○');
+  }).join(' ');
+
+  let lines = [
+    '',
+    `  ${tc('◇ Skill Discovery', 'blue')} ${tdim('│')} ${idx + 1}/${total}`,
+    '',
+    `  ${dots}`,
+    '',
+    hr(),
+    '',
+  ];
+
+  if (S.discoveryPhase === 'show') {
+    lines.push(center(tdim('Look at this word:')));
+    lines.push('');
+    lines.push(center(tc(tb(word.toUpperCase()), 'fg')));
+    lines.push('');
+    lines.push(center(tdim('Remember it...')));
+  } else {
+    lines.push(center(tc('Type the word you saw:', 'blue')));
+    lines.push('');
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+function screenDeleteConfirm() {
+  const profile = getActiveProfile();
+  return [
+    '',
+    center(tc(tb('Delete Profile?'), 'red')),
+    '',
+    center(`Are you sure you want to delete`),
+    center(`${tc(profile.name, 'accent')}'s profile?`),
+    center(tdim('This cannot be undone.')),
+    '',
+    opt('yes', tc('Delete it', 'red')),
+    opt('no', 'Keep it'),
+    '',
+  ].join('\n');
+}
+
+// ─── GAME ENGINE ─────────────────────────────────────────────
+
+function startRound() {
+  const levelKey = LEVELS[S.level].key;
+  S.words = pickWords(levelKey, S.mode === 3 ? 40 : 10);
+  S.wordIdx = 0;
+  S.score = 0;
+  S.streak = 0;
+  S.bestStreak = 0;
+  S.correct = 0;
+  S.results = [];
+  S.attempts = 0;
+  S.screen = 'game';
+
+  const profile = getActiveProfile();
+  profile.stats.sessionsPlayed++;
+  saveActiveProfile(profile);
+
+  if (S.mode === 3) { // Rush
+    S.rushTime = 60;
+    S.rushActive = true;
+    prepareWord();
+    startRushTimer();
+  } else {
+    prepareWord();
+  }
+}
+
+function prepareWord() {
+  const word = S.words[S.wordIdx];
+  S.attempts = 0;
+
+  if (S.mode === 0) { // Flash
+    S.phase = 'show';
+    S.inputEnabled = false;
+    render();
+    const dur = Math.max(1500, Math.min(3000, word.length * 350));
+    S.timer = setTimeout(() => {
+      S.phase = 'type';
+      S.inputEnabled = true;
+      render();
+      $('input').focus();
+    }, dur);
+  } else if (S.mode === 1) { // Fill
+    S.hint = makeMissing(word);
+    S.phase = 'type';
+    S.inputEnabled = true;
+    render();
+  } else if (S.mode === 2) { // Scramble
+    S.hint = makeScramble(word);
+    S.phase = 'type';
+    S.inputEnabled = true;
+    render();
+  } else if (S.mode === 3) { // Rush
+    S.phase = 'type';
+    S.inputEnabled = true;
+    render();
+  } else if (S.mode === 4) { // Story
+    S.phase = 'type';
+    S.inputEnabled = true;
+    render();
+  }
+}
+
+function startRushTimer() {
+  if (S.rushTimer) clearInterval(S.rushTimer);
+  S.rushTimer = setInterval(() => {
+    S.rushTime--;
+    if (S.rushTime <= 10) sndTick();
+    if (S.rushTime <= 0) {
+      clearInterval(S.rushTimer);
+      S.rushTimer = null;
+      S.rushActive = false;
+      S.inputEnabled = false;
+      sndLevelUp();
+      // Save stats
+      const profile = getActiveProfile();
+      profile.stats.totalScore += S.score;
+      if (S.bestStreak > profile.stats.bestStreak) profile.stats.bestStreak = S.bestStreak;
+      saveActiveProfile(profile);
+    }
+    render();
+  }, 1000);
+}
+
+function checkAnswer(answer) {
+  const word = S.words[S.wordIdx];
+  const correct = answer.toLowerCase().trim() === word.toLowerCase();
+
+  if (correct) {
+    sndCorrect();
+    const points = S.attempts === 0 ? 10 : 5;
+    S.streak++;
+    S.score += points + Math.min(S.streak, 5);
+    if (S.streak > S.bestStreak) S.bestStreak = S.streak;
+    S.correct++;
+    S.results.push({ word, correct: true, attempts: S.attempts + 1 });
+
+    const profile = getActiveProfile();
+    updateMastery(profile, word, true);
+
+    if (S.mode === 3) { // Rush — immediate next word
+      sndRush();
+      S.wordIdx++;
+      if (S.wordIdx >= S.words.length) {
+        // Refill pool
+        S.words = [...S.words, ...pickWords(LEVELS[S.level].key, 20)];
+      }
+      prepareWord();
+      return;
+    }
+
+    S.lastCorrect = true;
+    S.lastWord = word;
+    S.screen = 'feedback';
+    render();
+    setTimeout(() => nextWord(), 1100);
+  } else {
+    sndWrong();
+    S.attempts++;
+    S.streak = 0;
+
+    if (S.mode === 3) { // Rush — just shake, try again
+      render();
+      return;
+    }
+
+    if (S.attempts >= 2) {
+      S.results.push({ word, correct: false, attempts: S.attempts });
+      const profile = getActiveProfile();
+      updateMastery(profile, word, false);
+      S.lastCorrect = false;
+      S.lastWord = word;
+      S.screen = 'feedback';
+      render();
+      setTimeout(() => nextWord(), 1800);
+    } else {
+      render();
+    }
+  }
+}
+
+function nextWord() {
+  S.wordIdx++;
+  if (S.wordIdx >= S.words.length) {
+    // Round done
+    const profile = getActiveProfile();
+    profile.stats.totalScore += S.score;
+    if (S.bestStreak > profile.stats.bestStreak) profile.stats.bestStreak = S.bestStreak;
+    // Count newly mastered words
+    const allWords = Object.values(WORDS).flat();
+    profile.stats.wordsLearned = allWords.filter(w => (profile.mastery[w]||{}).stars >= 5).length;
+    saveActiveProfile(profile);
+    if (S.correct === S.words.length) sndLevelUp();
+    S.screen = 'results';
+    render();
+  } else {
+    S.screen = 'game';
+    prepareWord();
+  }
+}
+
+// Discovery
+function startDiscovery() {
+  // Pick 3 words from each level
+  S.discoveryWords = [];
+  Object.keys(WORDS).forEach((key, lvlIdx) => {
+    const picked = shuffle(WORDS[key]).slice(0, 3);
+    picked.forEach(w => S.discoveryWords.push({ word: w, level: lvlIdx }));
+  });
+  S.discoveryWords = shuffle(S.discoveryWords);
+  S.discoveryResults = [];
+  S.discoveryIdx = 0;
+  S.discoveryPhase = 'show';
+  S.screen = 'discovery';
+  showDiscoveryWord();
+}
+
+function showDiscoveryWord() {
+  if (S.discoveryIdx >= S.discoveryWords.length) {
+    render();
+    return;
+  }
+  S.discoveryPhase = 'show';
+  S.inputEnabled = false;
+  render();
+  const word = S.discoveryWords[S.discoveryIdx].word;
+  const dur = Math.max(1500, Math.min(2500, word.length * 350));
+  S.timer = setTimeout(() => {
+    S.discoveryPhase = 'type';
+    S.inputEnabled = true;
+    render();
+    $('input').focus();
+  }, dur);
+}
+
+function checkDiscoveryAnswer(answer) {
+  const entry = S.discoveryWords[S.discoveryIdx];
+  const correct = answer.toLowerCase().trim() === entry.word.toLowerCase();
+  S.discoveryResults.push({ word: entry.word, level: entry.level, correct });
+  if (correct) sndCorrect(); else sndWrong();
+  S.discoveryIdx++;
+  if (S.discoveryIdx >= S.discoveryWords.length) {
+    render(); // Show results
+  } else {
+    showDiscoveryWord();
+  }
+}
+
+// ─── RENDER ──────────────────────────────────────────────────
+function render() {
+  const scr = $('screen');
+  const input = $('input');
+  let content = '';
+  let placeholder = 'Type here...';
+
+  switch (S.screen) {
+    case 'welcome':
+      content = screenWelcome();
+      placeholder = 'Press ENTER...';
+      break;
+    case 'profiles':
+      content = screenProfiles();
+      placeholder = 'Choose profile...';
+      break;
+    case 'newProfile':
+      content = screenNewProfile();
+      placeholder = S.newName ? 'Pick avatar (1-5) or type "go"...' : 'Your name...';
+      break;
+    case 'menu':
+      content = screenMenu();
+      placeholder = 'Choose option...';
+      break;
+    case 'levelSelect':
+      content = screenLevelSelect();
+      placeholder = 'Choose level (1-5)...';
+      break;
+    case 'modeSelect':
+      content = screenModeSelect();
+      placeholder = 'Choose mode (1-5)...';
+      break;
+    case 'game':
+      content = screenGame();
+      if (S.mode === 0 && S.phase === 'show') {
+        placeholder = 'Watch the word...';
+      } else if (S.mode === 3 && !S.rushActive) {
+        placeholder = 'Choose option...';
+      } else {
+        placeholder = 'Type your answer...';
+      }
+      break;
+    case 'feedback':
+      content = screenFeedback();
+      placeholder = '';
+      break;
+    case 'results':
+      content = screenResults();
+      placeholder = 'Choose option...';
+      break;
+    case 'progress':
+      content = screenProgress();
+      placeholder = 'Press 0 to go back...';
+      break;
+    case 'howToPlay':
+      content = screenHowToPlay();
+      placeholder = 'Press 0 to go back...';
+      break;
+    case 'discovery':
+      content = screenDiscovery();
+      if (S.discoveryIdx >= S.discoveryWords.length) {
+        placeholder = 'Press ENTER...';
+      } else {
+        placeholder = S.discoveryPhase === 'show' ? 'Watch...' : 'Type the word...';
+      }
+      break;
+    case 'deleteConfirm':
+      content = screenDeleteConfirm();
+      placeholder = 'Type yes or no...';
+      break;
+  }
+
+  scr.innerHTML = content;
+  scr.className = 'px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[13px] sm:text-[15px] leading-[1.6] min-h-[55vh] sm:min-h-[60vh] whitespace-pre-wrap fade-in';
+  input.placeholder = placeholder;
+  input.disabled = !S.inputEnabled;
+  if (S.inputEnabled) input.focus();
+
+  // Update title bar
+  const profile = getActiveProfile();
+  const titleBar = $('title-bar');
+  if (profile) {
+    titleBar.textContent = `owlsh — ${profile.name}`;
+  } else {
+    titleBar.textContent = 'owlsh v1.0';
+  }
+}
+
+// ─── INPUT ROUTER ────────────────────────────────────────────
+function handleInput(value) {
+  const v = value.trim();
+  const vl = v.toLowerCase();
+
+  switch (S.screen) {
+    case 'welcome':
+      initAudio();
+      S.screen = 'profiles';
+      break;
+
+    case 'profiles': {
+      const store = loadStore();
+      if (v === '+' || (store.profiles.length === 0 && v === '1')) {
+        S.newName = '';
+        S.newAvatar = 0;
+        S.screen = 'newProfile';
+      } else {
+        const idx = parseInt(v) - 1;
+        if (idx >= 0 && idx < store.profiles.length) {
+          setActiveProfileIndex(idx);
+          S.screen = 'menu';
+        }
+      }
+      break;
+    }
+
+    case 'newProfile':
+      if (!S.newName) {
+        if (v) {
+          S.newName = v.slice(0, 20);
+        }
+      } else if (vl === 'go' || vl === 'done' || vl === 'create') {
+        const av = AVATARS[S.newAvatar];
+        createProfile(S.newName, av.id);
+        S.screen = 'menu';
+      } else {
+        const n = parseInt(v) - 1;
+        if (n >= 0 && n < AVATARS.length) S.newAvatar = n;
+      }
+      break;
+
+    case 'menu':
+      if (v === '1') {
+        const profile = getActiveProfile();
+        if (profile.level === null) {
+          // Need discovery first
+          startDiscovery();
+          return;
+        }
+        S.level = profile.level;
+        S.screen = 'levelSelect';
+      } else if (v === '2') {
+        startDiscovery();
+        return;
+      } else if (v === '3') {
+        S.screen = 'progress';
+      } else if (v === '4') {
+        S.screen = 'howToPlay';
+      } else if (vl === 'p') {
+        S.screen = 'profiles';
+      } else if (vl === 'x') {
+        S.screen = 'deleteConfirm';
+      }
+      break;
+
+    case 'deleteConfirm':
+      if (vl === 'yes') {
+        const store = loadStore();
+        store.profiles.splice(store.activeProfile, 1);
+        store.activeProfile = store.profiles.length > 0 ? 0 : null;
+        saveStore(store);
+        S.screen = store.profiles.length > 0 ? 'profiles' : 'profiles';
+      } else {
+        S.screen = 'menu';
+      }
+      break;
+
+    case 'levelSelect':
+      if (v === '0') { S.screen = 'menu'; break; }
+      const lvl = parseInt(v) - 1;
+      if (lvl >= 0 && lvl < LEVELS.length) {
+        S.level = lvl;
+        S.screen = 'modeSelect';
+      }
+      break;
+
+    case 'modeSelect':
+      if (v === '0') { S.screen = 'levelSelect'; break; }
+      const mode = parseInt(v) - 1;
+      if (mode >= 0 && mode < MODES.length) {
+        S.mode = mode;
+        startRound();
+        return;
+      }
+      break;
+
+    case 'game':
+      if (S.mode === 0 && S.phase === 'show') return;
+      if (S.mode === 3 && !S.rushActive) {
+        // Rush ended — menu options
+        if (v === '1') { startRound(); return; }
+        if (v === '2') { S.screen = 'modeSelect'; break; }
+        if (v === '0') { S.screen = 'menu'; break; }
+        return;
+      }
+      if (v) {
+        checkAnswer(v);
+        return;
+      }
+      break;
+
+    case 'feedback':
+      return; // auto-advancing
+
+    case 'results':
+      if (v === '1') { startRound(); return; }
+      if (v === '2') { S.screen = 'modeSelect'; break; }
+      if (v === '3') { S.screen = 'levelSelect'; break; }
+      if (v === '0') { S.screen = 'menu'; break; }
+      break;
+
+    case 'progress':
+    case 'howToPlay':
+      if (v === '0' || v === '') S.screen = 'menu';
+      break;
+
+    case 'discovery':
+      if (S.discoveryIdx >= S.discoveryWords.length) {
+        // Results screen — press enter to continue
+        S.screen = 'menu';
+        break;
+      }
+      if (S.discoveryPhase === 'show') return;
+      if (v) {
+        checkDiscoveryAnswer(v);
+        return;
+      }
+      break;
+  }
+
+  render();
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+const input = $('input');
+
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const val = input.value;
+    input.value = '';
+    handleInput(val);
+  }
+});
+
+// Keep focus on input
+document.addEventListener('click', () => {
+  if (!input.disabled) input.focus();
+});
+
+// Cleanup timers on page unload
+window.addEventListener('beforeunload', () => {
+  if (S.timer) clearTimeout(S.timer);
+  if (S.rushTimer) clearInterval(S.rushTimer);
+});
+
+// First render
+render();
+
+</script>
+</body>
+</html>
