@@ -828,7 +828,8 @@ function screenDiscovery() {
     return lines.join('\n');
   }
 
-  const word = S.discoveryWords[idx];
+  const entry = S.discoveryWords[idx];
+  const word = entry.word;
   const dots = S.discoveryWords.map((_, i) => {
     if (i < idx) return S.discoveryResults[i]?.correct ? tc('●', 'green') : tc('●', 'red');
     if (i === idx) return tc('◉', 'accent');
