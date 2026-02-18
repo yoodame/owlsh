@@ -1364,7 +1364,22 @@ window.addEventListener('beforeunload', () => {
   if (S.rushTimer) clearInterval(S.rushTimer);
 });
 
-// First render
+// ─── SESSION RESTORE ─────────────────────────────────────────
+// On load, skip welcome screen if a profile already exists
+function initScreen() {
+  const store = loadStore();
+  if (store.activeProfile !== null && store.profiles[store.activeProfile]) {
+    initAudio();
+    S.screen = 'menu';
+  } else if (store.profiles.length > 0) {
+    initAudio();
+    S.screen = 'profiles';
+  } else {
+    S.screen = 'welcome';
+  }
+}
+
+initScreen();
 render();
 
 </script>
