@@ -61,6 +61,9 @@
     pre { tab-size: 2; }
     #input:focus { outline: none; }
     ::selection { background: rgba(244,132,95,0.3); }
+    .logo-wrap { display: block; transform-origin: center top; }
+    #back-btn { display: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    #back-btn.visible { display: inline-block; }
   </style>
 </head>
 <body class="bg-t-bg min-h-screen flex items-center justify-center p-3 sm:p-8 selection:bg-t-accent/30">
@@ -72,6 +75,7 @@
         <div class="w-2.5 h-2.5 rounded-full bg-t-yellow/80"></div>
         <div class="w-2.5 h-2.5 rounded-full bg-t-green/80"></div>
       </div>
+      <span id="back-btn" class="text-t-dim text-xs px-1" onclick="goBack()">◀ back</span>
       <span id="title-bar" class="text-t-dim text-xs flex-1 text-center">owlsh v1.0</span>
     </div>
 
@@ -418,7 +422,7 @@ function screenWelcome() {
   const logo = centerBlock(LOGO.split('\n').map(l => tc(l, 'accent')).join('\n'));
   return [
     '',
-    logo,
+    `<span class="logo-wrap">${logo}</span>`,
     center(tdim('sight words terminal')),
     '',
     centerBlock(owlArt('idle')),
@@ -572,7 +576,7 @@ function screenGame() {
   }).join(' ');
 
   let lines = [
-    `  ${tc(lvl.name, 'blue')} ${tdim('│')} ${tc(mode.icon + ' ' + mode.name, 'accent')} ${tdim('│')} Score: ${tc(S.score, 'yellow')} ${tdim('│')} ${tdim('ESC to quit')}`,
+    `  ${tc(lvl.name, 'blue')} ${tdim('│')} ${tc(mode.icon + ' ' + mode.name, 'accent')} ${tdim('│')} Score: ${tc(S.score, 'yellow')}`,
     '',
     `  ${dots}`,
     `  Streak: ${S.streak > 0 ? tc(S.streak + ' fire', 'accent') : tdim('0')}`,
@@ -1187,18 +1191,42 @@ function render() {
   }
 
   scr.innerHTML = content;
-  scr.className = 'px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[16px] sm:text-[18px] leading-[1.6] min-h-[55vh] sm:min-h-[60vh] whitespace-pre-wrap fade-in';
+  scr.className = 'px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[16px] sm:text-[18px] leading-[1.6] min-h-[40vh] sm:min-h-[60vh] whitespace-pre-wrap fade-in';
   input.placeholder = placeholder;
   input.disabled = !S.inputEnabled;
   if (S.inputEnabled) input.focus();
 
-  // Update title bar
+  // Update title bar and back button
   const profile = getActiveProfile();
   const titleBar = $('title-bar');
+  const backBtn = $('back-btn');
   if (profile) {
     titleBar.textContent = `owlsh — ${profile.name}`;
   } else {
     titleBar.textContent = 'owlsh v1.0';
+  }
+  const hasBack = S.screen !== 'welcome';
+  if (backBtn) backBtn.className = hasBack ? 'text-t-dim text-xs px-1 visible' : 'text-t-dim text-xs px-1';
+
+  // Scale logo to fit on small screens
+  const logoEl = scr.querySelector('.logo-wrap');
+  if (logoEl) {
+    const contentPx = scr.clientWidth - parseFloat(getComputedStyle(scr).paddingLeft) - parseFloat(getComputedStyle(scr).paddingRight);
+    const logoChars = 43; // LOGO width in characters
+    const ruler = document.createElement('span');
+    ruler.style.cssText = 'position:absolute;visibility:hidden;white-space:pre';
+    ruler.textContent = '0'.repeat(logoChars);
+    scr.appendChild(ruler);
+    const logoPx = ruler.getBoundingClientRect().width;
+    scr.removeChild(ruler);
+    if (logoPx > contentPx) {
+      const scale = contentPx / logoPx;
+      logoEl.style.transform = `scale(${scale.toFixed(3)})`;
+      logoEl.style.marginBottom = `-${(1 - scale) * logoEl.scrollHeight * 0.8}px`;
+    } else {
+      logoEl.style.transform = '';
+      logoEl.style.marginBottom = '';
+    }
   }
 }
 
@@ -1349,33 +1377,35 @@ function handleInput(value) {
 // ─── INIT ────────────────────────────────────────────────────
 const input = $('input');
 
+function goBack() {
+  input.value = '';
+  if (S.timer) { clearTimeout(S.timer); S.timer = null; }
+  if (S.rushTimer) { clearInterval(S.rushTimer); S.rushTimer = null; }
+  S.inputEnabled = true;
+  if (S.screen === 'game' || S.screen === 'feedback' || S.screen === 'results') {
+    S.screen = 'modeSelect';
+  } else if (S.screen === 'discovery') {
+    S.screen = 'menu';
+  } else if (S.screen === 'modeSelect') {
+    S.screen = 'levelSelect';
+  } else if (S.screen === 'levelSelect') {
+    S.screen = 'menu';
+  } else if (S.screen === 'progress' || S.screen === 'howToPlay' || S.screen === 'deleteConfirm') {
+    S.screen = 'menu';
+  } else if (S.screen === 'newProfile') {
+    S.screen = 'profiles';
+  } else if (S.screen === 'menu') {
+    S.screen = 'profiles';
+  } else if (S.screen === 'profiles') {
+    S.screen = 'welcome';
+  }
+  render();
+}
+
 input.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     e.preventDefault();
-    input.value = '';
-    // Clear any active timers
-    if (S.timer) { clearTimeout(S.timer); S.timer = null; }
-    if (S.rushTimer) { clearInterval(S.rushTimer); S.rushTimer = null; }
-    S.inputEnabled = true;
-    // Route back based on current screen
-    if (S.screen === 'game' || S.screen === 'feedback' || S.screen === 'results') {
-      S.screen = 'modeSelect';
-    } else if (S.screen === 'discovery') {
-      S.screen = 'menu';
-    } else if (S.screen === 'modeSelect') {
-      S.screen = 'levelSelect';
-    } else if (S.screen === 'levelSelect') {
-      S.screen = 'menu';
-    } else if (S.screen === 'progress' || S.screen === 'howToPlay' || S.screen === 'deleteConfirm') {
-      S.screen = 'menu';
-    } else if (S.screen === 'newProfile') {
-      S.screen = 'profiles';
-    } else if (S.screen === 'menu') {
-      S.screen = 'profiles';
-    } else if (S.screen === 'profiles') {
-      S.screen = 'welcome';
-    }
-    render();
+    goBack();
     return;
   }
   if (e.key === 'Enter') {
@@ -1387,9 +1417,16 @@ input.addEventListener('keydown', (e) => {
 });
 
 // Keep focus on input
-document.addEventListener('click', () => {
-  if (!input.disabled) input.focus();
+document.addEventListener('click', (e) => {
+  if (!input.disabled && e.target.id !== 'back-btn') input.focus();
 });
+
+// Scroll input into view when mobile keyboard opens
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    $('input-bar').scrollIntoView({ block: 'end', behavior: 'smooth' });
+  });
+}
 
 // Cleanup timers on page unload
 window.addEventListener('beforeunload', () => {
