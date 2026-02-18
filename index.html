@@ -316,7 +316,21 @@ let S = {
 
 // ─── UI HELPERS ──────────────────────────────────────────────
 const $ = id => document.getElementById(id);
-const W = 58; // content width in characters
+let W = 58; // content width in characters (updated dynamically)
+
+function updateW() {
+  const scr = $('screen');
+  if (!scr || !scr.clientWidth) return;
+  const style = getComputedStyle(scr);
+  const contentPx = scr.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  const ruler = document.createElement('span');
+  ruler.style.cssText = 'position:absolute;visibility:hidden;white-space:pre';
+  ruler.textContent = '0000000000';
+  scr.appendChild(ruler);
+  const chPx = ruler.getBoundingClientRect().width / 10;
+  scr.removeChild(ruler);
+  if (chPx > 0) W = Math.floor(contentPx / chPx);
+}
 
 function tc(text, color) { return `<span class="text-t-${color}">${text}</span>`; }
 function tb(text) { return `<span class="font-bold">${text}</span>`; }
@@ -326,6 +340,13 @@ function center(text) {
   const stripped = text.replace(/<[^>]*>/g, '');
   const pad = Math.max(0, Math.floor((W - stripped.length) / 2));
   return ' '.repeat(pad) + text;
+}
+
+function centerBlock(text) {
+  const lines = text.split('\n');
+  const maxLen = Math.max(...lines.map(l => l.replace(/<[^>]*>/g, '').length));
+  const pad = Math.max(0, Math.floor((W - maxLen) / 2));
+  return lines.map(l => ' '.repeat(pad) + l).join('\n');
 }
 
 function hr(ch = '─') { return tdim(ch.repeat(W)); }
@@ -388,13 +409,13 @@ function makeScramble(word) {
 // ─── SCREENS ─────────────────────────────────────────────────
 
 function screenWelcome() {
-  const logo = LOGO.split('\n').map(l => '  ' + tc(l, 'accent')).join('\n');
+  const logo = centerBlock(LOGO.split('\n').map(l => tc(l, 'accent')).join('\n'));
   return [
     '',
     logo,
     center(tdim('sight words terminal')),
     '',
-    owlArt('idle').split('\n').map(l => center(l)).join('\n'),
+    centerBlock(owlArt('idle')),
     '',
     center(tc('Learn sight words, one keystroke at a time.', 'dim')),
     '',
@@ -647,7 +668,7 @@ function screenFeedback() {
   let lines = [];
   if (S.lastCorrect) {
     lines.push('');
-    lines.push(owlArt('happy').split('\n').map(l => center(l)).join('\n'));
+    lines.push(centerBlock(owlArt('happy')));
     lines.push('');
     lines.push(center(tc('✓ ' + rand(CHEERS), 'green')));
     lines.push('');
@@ -658,7 +679,7 @@ function screenFeedback() {
     }
   } else {
     lines.push('');
-    lines.push(owlArt('encourage').split('\n').map(l => center(l)).join('\n'));
+    lines.push(centerBlock(owlArt('encourage')));
     lines.push('');
     lines.push(center(tdim('The word was:')));
     lines.push('');
@@ -677,7 +698,7 @@ function screenResults() {
 
   let lines = [
     '',
-    owlArt(mood).split('\n').map(l => center(l)).join('\n'),
+    centerBlock(owlArt(mood)),
     '',
     center(tc(tb('Round Complete!'), 'accent')),
     '',
@@ -810,7 +831,7 @@ function screenDiscovery() {
 
     let lines = [
       '',
-      owlArt('celebrate').split('\n').map(l => center(l)).join('\n'),
+      centerBlock(owlArt('celebrate')),
       '',
       center(tc(tb('Discovery Complete!'), 'accent')),
       '',
@@ -1088,6 +1109,7 @@ function checkDiscoveryAnswer(answer) {
 
 // ─── RENDER ──────────────────────────────────────────────────
 function render() {
+  updateW();
   const scr = $('screen');
   const input = $('input');
   let content = '';
@@ -1382,6 +1404,7 @@ function initScreen() {
 
 initScreen();
 render();
+window.addEventListener('resize', () => { updateW(); render(); });
 
 </script>
 </body>
