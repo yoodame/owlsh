@@ -1568,10 +1568,10 @@ function screenDiscovery() {
     // Show results
     const scores = [0,0,0,0,0]; // per level
     S.discoveryResults.forEach(r => { if (r.correct) scores[r.level]++; });
-    // Find highest level where they got 2+ correct
+    // Find highest level where they got at least 1 correct
     let bestLevel = 0;
     for (let i = 4; i >= 0; i--) {
-      if (scores[i] >= 2) { bestLevel = i; break; }
+      if (scores[i] >= 1) { bestLevel = i; break; }
     }
 
     const profile = getActiveProfile();
@@ -1587,7 +1587,7 @@ function screenDiscovery() {
     ];
     LEVELS.forEach((lvl, i) => {
       const s = scores[i];
-      const bar = tc('●'.repeat(s), 'green') + tdim('○'.repeat(3 - s));
+      const bar = tc('●'.repeat(s), 'green') + tdim('○'.repeat(2 - s));
       const chosen = i === bestLevel ? tc(' ◀ Your level!', 'accent') : '';
       lines.push(`  ${lvl.icon} ${lvl.name.padEnd(12)} ${bar}${chosen}`);
     });
@@ -1924,10 +1924,10 @@ function nextWord() {
 
 // Discovery
 function startDiscovery() {
-  // Pick 3 words from each level
+  // Pick 2 words from each level
   S.discoveryWords = [];
   Object.keys(WORDS).forEach((key, lvlIdx) => {
-    const picked = shuffle(WORDS[key]).slice(0, 3);
+    const picked = shuffle(WORDS[key]).slice(0, 2);
     picked.forEach(w => S.discoveryWords.push({ word: w, level: lvlIdx }));
   });
   S.discoveryWords = shuffle(S.discoveryWords);
@@ -1957,7 +1957,7 @@ function showDiscoveryWord() {
     S.discoveryChoices = shuffle([word, ...distractors]);
   }
 
-  const dur = Math.max(2500, Math.min(5000, word.length * 500));
+  const dur = Math.max(1500, Math.min(3000, word.length * 400));
   S.timer = setTimeout(() => {
     S.discoveryPhase = 'type';
     S.inputEnabled = true;
