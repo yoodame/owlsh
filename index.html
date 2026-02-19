@@ -56,35 +56,168 @@
     .fade-in { animation: fadeIn 0.2s ease-out; }
     @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
     .shake { animation: shake 0.3s ease-out; }
+    @keyframes cardShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+    .card-shake { animation: cardShake 0.4s ease-out; }
     @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     .pop-in { animation: popIn 0.25s ease-out; }
+    @keyframes cardPop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     pre { tab-size: 2; }
     #input:focus { outline: none; }
     ::selection { background: rgba(244,132,95,0.3); }
     .logo-wrap { display: block; transform-origin: center top; }
-    #back-btn { display: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-    #back-btn.visible { display: inline-block; }
+    #back-btn { display: none; cursor: pointer; -webkit-tap-highlight-color: transparent; align-items: center; gap: 2px; padding: 4px 6px; border-radius: 4px; }
+    #back-btn:active { background: rgba(255,255,255,0.05); }
+    #back-btn.visible { display: inline-flex; }
+    #tap-area { padding: 1rem 1rem 0.75rem; border-top: 1px solid #30363d; margin-top: auto; overflow-y: auto; }
+    #tap-area.hidden { display: none; }
+    html, body { overflow: hidden; height: 100%; }
+    .tap-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 48px; min-width: 48px; padding: 10px 20px;
+      background: rgba(22,27,34,0.6); border: 2px solid #30363d; border-radius: 8px;
+      color: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 16px;
+      cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, transform 0.1s, background 0.15s;
+    }
+    .tap-btn:active, .tap-btn.pressing { border-color: #f4845f; transform: scale(0.96); }
+    .tap-btn-large {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 56px; width: 100%; padding: 14px 24px;
+      background: rgba(22,27,34,0.6); border: 2px solid #f4845f; border-radius: 10px;
+      color: #f4845f; font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700;
+      cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, transform 0.1s, background 0.15s;
+    }
+    .tap-btn-large:active, .tap-btn-large.pressing { background: rgba(244,132,95,0.15); transform: scale(0.97); }
+    .word-card {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 56px; padding: 12px 16px;
+      background: rgba(22,27,34,0.6); border: 2px solid #30363d; border-radius: 10px;
+      color: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700;
+      cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, transform 0.1s, background 0.2s;
+      text-transform: uppercase;
+    }
+    .word-card:active, .word-card.pressing { border-color: #f4845f; transform: scale(0.96); }
+    .word-card.correct { border-color: #3fb950; background: rgba(63,185,80,0.15); }
+    .word-card.wrong { border-color: #f85149; background: rgba(248,81,73,0.15); }
+    .letter-tile {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 48px; height: 48px;
+      background: rgba(22,27,34,0.6); border: 2px solid #30363d; border-radius: 8px;
+      color: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700;
+      cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, transform 0.1s, background 0.15s;
+      text-transform: uppercase;
+    }
+    .letter-tile:active, .letter-tile.pressing { border-color: #f4845f; transform: scale(0.93); }
+    .letter-tile.used { opacity: 0.3; pointer-events: none; }
+    .letter-slot {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 48px; height: 48px;
+      background: transparent; border: 2px dashed #484f58; border-radius: 8px;
+      color: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700;
+      user-select: none;
+    }
+    .letter-slot.filled { border-style: solid; border-color: #58a6ff; background: rgba(88,166,255,0.1); }
+    .letter-slot.given { border-style: solid; border-color: #484f58; color: #484f58; }
+    .profile-card {
+      display: flex; align-items: center; gap: 12px;
+      min-height: 56px; width: 100%; padding: 12px 16px;
+      background: rgba(22,27,34,0.6); border: 2px solid #30363d; border-radius: 10px;
+      color: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 16px;
+      cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, transform 0.1s, background 0.15s;
+    }
+    .profile-card:active, .profile-card.pressing { border-color: #f4845f; transform: scale(0.98); }
+    .profile-card .avatar { font-size: 20px; }
+    .profile-card .name { font-weight: 700; }
+    .profile-card .level { color: #484f58; font-size: 13px; }
+    .menu-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .menu-card {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      min-height: 72px; padding: 14px 8px;
+      background: rgba(22,27,34,0.6); border: 2px solid #30363d; border-radius: 10px;
+      color: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 15px;
+      cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, transform 0.1s, background 0.15s;
+    }
+    .menu-card:active, .menu-card.pressing { border-color: #f4845f; transform: scale(0.96); }
+    .menu-card .icon { font-size: 24px; }
+    /* Responsive: small phones (≤380px) */
+    @media (max-width: 380px) {
+      .tap-btn { font-size: 14px; padding: 8px 14px; min-height: 44px; }
+      .tap-btn-large { font-size: 17px; min-height: 48px; padding: 12px 16px; }
+      .word-card { font-size: 18px; min-height: 48px; padding: 10px 12px; }
+      .letter-tile, .letter-slot { width: 40px; height: 40px; font-size: 18px; }
+      .menu-card { min-height: 60px; font-size: 13px; padding: 10px 6px; }
+      .profile-card { min-height: 48px; padding: 10px 12px; font-size: 14px; }
+      .profile-card .avatar { font-size: 16px; }
+      #tap-area { padding: 0.5rem 0.75rem 0.5rem; }
+    }
+    /* Responsive: tablets and up (≥768px) */
+    @media (min-width: 768px) {
+      .word-card { font-size: 24px; min-height: 64px; }
+      .menu-card { min-height: 80px; font-size: 16px; }
+      .letter-tile, .letter-slot { width: 52px; height: 52px; font-size: 24px; }
+    }
+    #settings-wrap { position: relative; }
+    #settings-btn { cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; padding: 2px; display: flex; align-items: center; opacity: 0.7; }
+    #settings-btn:hover { opacity: 1; }
+    #settings-panel {
+      display: none; position: absolute; top: 100%; right: 0; margin-top: 6px;
+      width: 220px; background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 6px 0; z-index: 50; font-family: 'JetBrains Mono', monospace;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    #settings-panel.open { display: block; }
+    .settings-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 14px; font-size: 13px; color: #e6edf3; cursor: pointer;
+      user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .settings-row:active { background: rgba(244,132,95,0.08); }
+    .settings-row.disabled { opacity: 0.3; pointer-events: none; }
+    .settings-divider { height: 1px; background: #21262d; margin: 4px 0; }
+    .settings-label { font-size: 11px; color: #484f58; padding: 6px 14px 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .settings-val { color: #484f58; font-size: 12px; }
   </style>
 </head>
-<body class="bg-t-bg min-h-screen flex items-center justify-center p-3 sm:p-8 selection:bg-t-accent/30">
-  <div class="w-full max-w-[68ch]">
+<body class="bg-t-bg h-[100dvh] flex flex-col items-center p-3 sm:p-4 selection:bg-t-accent/30 overflow-hidden">
+  <div class="w-full max-w-[68ch] flex flex-col h-full">
     <!-- Terminal title bar -->
-    <div class="flex items-center gap-2 px-4 py-2 bg-t-surface rounded-t-lg border border-t-border">
+    <div class="flex items-center gap-2 px-4 py-2 bg-t-surface rounded-t-lg border border-t-border shrink-0">
       <div class="flex gap-1.5">
         <div class="w-2.5 h-2.5 rounded-full bg-t-red/80"></div>
         <div class="w-2.5 h-2.5 rounded-full bg-t-yellow/80"></div>
         <div class="w-2.5 h-2.5 rounded-full bg-t-green/80"></div>
       </div>
-      <span id="back-btn" class="text-t-dim text-xs px-1" onclick="goBack()">◀ back</span>
+      <span id="back-btn" onclick="goBack()"></span>
       <span id="title-bar" class="text-t-dim text-xs flex-1 text-center">owlsh v1.0</span>
-      <span id="mute-btn" class="text-sm px-1 cursor-pointer leading-none" onclick="toggleMute()" style="-webkit-tap-highlight-color:transparent" title="Toggle sound">🔊</span>
+      <div id="settings-wrap">
+        <span id="settings-btn" onclick="toggleSettings(event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e6edf3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
+        <div id="settings-panel">
+          <div class="settings-row" onclick="toggleMute()">
+            <span id="s-mute-row"></span>
+          </div>
+          <div class="settings-row" onclick="toggleInputMode()">
+            <span id="s-mode-row"></span>
+          </div>
+          <div class="settings-divider"></div>
+          <div class="settings-label">Level</div>
+          <div id="s-levels"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Terminal body -->
-    <div class="border border-t-0 border-t-border rounded-b-lg bg-t-bg relative overflow-hidden">
+    <div id="terminal-body" class="border border-t-0 border-t-border rounded-b-lg bg-t-bg relative flex flex-col min-h-0 flex-1">
       <div class="absolute inset-0 pointer-events-none scanlines"></div>
-      <pre id="screen" class="px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[16px] sm:text-[18px] leading-[1.6] min-h-[55vh] sm:min-h-[60vh] whitespace-pre-wrap fade-in"></pre>
-      <div id="input-bar" class="flex items-center px-4 sm:px-6 py-3 border-t border-t-border">
+      <pre id="screen" class="px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[16px] sm:text-[18px] leading-[1.6] whitespace-pre-wrap fade-in flex-1 min-h-0 overflow-y-auto"></pre>
+      <div id="tap-area" class="hidden shrink-0"></div>
+      <div id="input-bar" class="flex items-center px-4 sm:px-6 py-3 border-t border-t-border shrink-0">
         <span class="text-t-accent font-bold mr-2 text-base sm:text-lg">❯</span>
         <input
           id="input"
@@ -98,7 +231,7 @@
         />
       </div>
     </div>
-    <div class="text-center mt-2 text-t-dim text-[10px]">built with care</div>
+    <div class="text-center mt-1 text-t-dim text-[10px] shrink-0">built with care</div>
   </div>
 
 <script>
@@ -407,11 +540,11 @@ const CHEERS = ['Amazing!','Fantastic!','Brilliant!','Superb!','Nailed it!','Per
 const NUDGES = ['Almost!','Try again!','So close!','You got this!','Keep going!','One more try!','Almost there!','Don\'t give up!'];
 
 const MODES = [
-  { key: 'flash',    name: 'Flash',    icon: '✦', desc: 'See it, remember it, type it' },
-  { key: 'fill',     name: 'Fill',     icon: '◧', desc: 'Complete the missing letters' },
-  { key: 'scramble', name: 'Scramble', icon: '◈', desc: 'Unscramble the jumbled letters' },
-  { key: 'rush',     name: 'Rush',     icon: '▶', desc: 'Type fast — beat the clock!' },
-  { key: 'story',    name: 'Story',    icon: '▤', desc: 'Fill the blank in a sentence' },
+  { key: 'flash',    name: 'Flash',    emoji: '✦', ico: 'zap',      desc: 'See it, remember it, tap it' },
+  { key: 'fill',     name: 'Fill',     emoji: '◧', ico: 'puzzle',   desc: 'Complete the missing letters' },
+  { key: 'scramble', name: 'Scramble', emoji: '◈', ico: 'shuffle',  desc: 'Unscramble the jumbled letters' },
+  { key: 'rush',     name: 'Rush',     emoji: '▶', ico: 'timer',    desc: 'Tap fast — beat the clock!' },
+  { key: 'story',    name: 'Story',    emoji: '▤', ico: 'bookOpen', desc: 'Fill the blank in a sentence' },
 ];
 
 // ─── AUDIO ───────────────────────────────────────────────────
@@ -426,6 +559,32 @@ function toggleMute() {
   muted = !muted;
   localStorage.setItem('owlsh_muted', muted ? '1' : '0');
   render();
+}
+function toggleInputMode() {
+  S.inputMode = S.inputMode === 'tap' ? 'type' : 'tap';
+  localStorage.setItem('owlsh_inputMode', S.inputMode);
+  render();
+}
+function toggleSettings(e) {
+  if (e) { e.stopPropagation(); }
+  const panel = $('settings-panel');
+  panel.classList.toggle('open');
+}
+function closeSettings() {
+  $('settings-panel').classList.remove('open');
+}
+function setLevel(lvl) {
+  if (isInActiveGame()) return;
+  const profile = getActiveProfile();
+  if (!profile) return;
+  S.level = lvl;
+  profile.level = lvl;
+  saveActiveProfile(profile);
+  closeSettings();
+  render();
+}
+function isInActiveGame() {
+  return S.screen === 'game' || S.screen === 'discovery';
 }
 function tone(freq, dur, type = 'sine', vol = 0.12) {
   if (!actx || muted) return;
@@ -523,14 +682,56 @@ function sndGameStart() {
 }
 
 // ─── STORE (localStorage) ────────────────────────────────────
+// Schema is versioned. On load, migrations run sequentially from
+// the stored version up to STORE_VERSION. To evolve the schema:
+//   1. Bump STORE_VERSION
+//   2. Add a migration function to MIGRATIONS[newVersion]
+//   3. The migration receives the store object and mutates it
+// Mastery is keyed by word string (e.g. profile.mastery['the']),
+// so adding new words to WORDS is safe — they start unmastered.
+// profile.level is an index into LEVELS — reordering LEVELS
+// requires a migration to remap indices.
 const STORE_KEY = 'owlsh_data';
+const STORE_VERSION = 1;
+
+const MIGRATIONS = {
+  // v0 → v1: add version field, ensure profile shape
+  1: (store) => {
+    store.profiles.forEach(p => {
+      if (!p.stats) p.stats = { totalScore: 0, wordsLearned: 0, sessionsPlayed: 0, bestStreak: 0 };
+      if (!p.mastery) p.mastery = {};
+      if (!p.created) p.created = Date.now();
+    });
+  },
+  // Future migrations go here:
+  // 2: (store) => { /* e.g. remap level indices after reorder */ },
+};
+
+function migrateStore(store) {
+  const from = store._v || 0;
+  for (let v = from + 1; v <= STORE_VERSION; v++) {
+    if (MIGRATIONS[v]) MIGRATIONS[v](store);
+  }
+  store._v = STORE_VERSION;
+  return store;
+}
+
+function freshStore() {
+  return { _v: STORE_VERSION, profiles: [], activeProfile: null };
+}
 
 function loadStore() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || { profiles: [], activeProfile: null }; }
-  catch { return { profiles: [], activeProfile: null }; }
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (!raw) return freshStore();
+    return migrateStore(raw);
+  } catch {
+    return freshStore();
+  }
 }
 
 function saveStore(data) {
+  data._v = STORE_VERSION;
   localStorage.setItem(STORE_KEY, JSON.stringify(data));
 }
 
@@ -592,6 +793,7 @@ function updateMastery(profile, word, wasCorrect) {
 // ─── STATE ───────────────────────────────────────────────────
 let S = {
   screen: 'welcome',
+  inputMode: localStorage.getItem('owlsh_inputMode') || 'tap',
   // profile creation
   newName: '',
   newAvatar: 0,
@@ -609,6 +811,14 @@ let S = {
   attempts: 0,
   hint: '',
   timer: null,
+  // tap mode
+  choices: [],
+  selectedLetters: [],
+  availableLetters: [],
+  tappedCard: null,
+  _filledLetters: [],
+  _storySentence: null,
+  _storyWord: null,
   // rush mode
   rushTime: 60,
   rushTimer: null,
@@ -618,12 +828,13 @@ let S = {
   discoveryResults: [],
   discoveryIdx: 0,
   discoveryPhase: 'show',
+  discoveryChoices: [],
   // feedback
   lastCorrect: false,
   lastWord: '',
   // misc
   inputEnabled: true,
-  deleteConfirm: false,
+  deleteProfileIdx: null,
 };
 
 // ─── UI HELPERS ──────────────────────────────────────────────
@@ -644,6 +855,32 @@ function updateW() {
   if (chPx > 0) W = Math.floor(contentPx / chPx);
 }
 
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+// Inline SVG icons (Lucide-style, 24x24 viewBox)
+const ICONS = {
+  play:      '<path d="M6 3l14 9-14 9V3z"/>',
+  compass:   '<circle cx="12" cy="12" r="10"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z"/>',
+  barChart:  '<path d="M18 20V10M12 20V4M6 20v-6"/>',
+  helpCircle:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5"/>',
+  zap:       '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
+  puzzle:    '<path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02z"/>',
+  shuffle:   '<path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H18M18 2l4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2M16.8 15.8c-.8 1.2-2.1 2.2-3.6 2.2H18M18 14l4 4-4 4"/>',
+  timer:     '<path d="M10 2h4"/><path d="M12 14V10"/><circle cx="12" cy="14" r="8"/>',
+  bookOpen:  '<path d="M12 7c-1.5-1.5-3.5-2-5-2s-3.5.5-5 2v12c1.5-1 3-1.5 5-1.5s3.5.5 5 1.5M12 7c1.5-1.5 3.5-2 5-2s3.5.5 5 2v12c-1.5-1-3-1.5-5-1.5s-3.5.5-5 1.5"/>',
+  chevronLeft:'<path d="M15 18l-6-6 6-6"/>',
+  volume2:   '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>',
+  volumeX:   '<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/>',
+  hand:      '<path d="M18 11V6a2 2 0 0 0-4 0v4M14 10V4a2 2 0 0 0-4 0v7M10 10.5V2a2 2 0 0 0-4 0v9"/><path d="M7 15.172A4 4 0 0 1 6 12.828V11a2 2 0 0 0-4 0v1a10 10 0 0 0 10 10h1a6 6 0 0 0 6-6v-2a2 2 0 0 0-4 0"/>',
+  keyboard:  '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>',
+  undo:      '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+  arrowLeft: '<path d="M19 12H5M12 19l-7-7 7-7"/>',
+  rotateCcw: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  trash2:    '<path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
+  settings:  '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+};
+function icon(name, size = 16, color = '#e6edf3') {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle">${ICONS[name] || ''}</svg>`;
+}
 function tc(text, color) { return `<span class="text-t-${color}">${text}</span>`; }
 function tb(text) { return `<span class="font-bold">${text}</span>`; }
 function tdim(text) { return tc(text, 'dim'); }
@@ -661,7 +898,7 @@ function centerBlock(text) {
   return lines.map(l => ' '.repeat(pad) + l).join('\n');
 }
 
-function hr(ch = '─') { return tdim(ch.repeat(W)); }
+function hr(ch = '─') { return `<span style="color:#21262d">${ch.repeat(W)}</span>`; }
 
 function progressBar(cur, total, w = 20) {
   const filled = Math.round((cur / Math.max(total, 1)) * w);
@@ -718,74 +955,107 @@ function makeScramble(word) {
   return s;
 }
 
+// ─── DISTRACTOR GENERATION ───────────────────────────────────
+function generateDistractors(word, count, levelKey) {
+  const pool = WORDS[levelKey].filter(w => w !== word);
+  // Sort candidates: prefer similar length, then same starting letter
+  const scored = pool.map(w => {
+    let s = 0;
+    if (Math.abs(w.length - word.length) <= 1) s += 3;
+    else if (Math.abs(w.length - word.length) <= 2) s += 1;
+    if (w[0] === word[0]) s += 2; // tricky same-start distractor
+    s += Math.random(); // randomize within tiers
+    return { w, s };
+  });
+  scored.sort((a, b) => b.s - a.s);
+
+  const result = [];
+  // Take one same-start-letter distractor if available
+  const sameStart = scored.find(x => x.w[0] === word[0]);
+  if (sameStart) result.push(sameStart.w);
+
+  // Fill remaining from scored list
+  for (const { w } of scored) {
+    if (result.length >= count) break;
+    if (!result.includes(w)) result.push(w);
+  }
+
+  // Fall back to adjacent levels if not enough
+  if (result.length < count) {
+    const levelKeys = Object.keys(WORDS);
+    const idx = levelKeys.indexOf(levelKey);
+    const adjacent = [idx - 1, idx + 1].filter(i => i >= 0 && i < levelKeys.length);
+    for (const ai of adjacent) {
+      const extra = WORDS[levelKeys[ai]].filter(w => w !== word && !result.includes(w));
+      for (const w of shuffle(extra)) {
+        if (result.length >= count) break;
+        result.push(w);
+      }
+    }
+  }
+
+  return shuffle(result.slice(0, count));
+}
+
 // ─── SCREENS ─────────────────────────────────────────────────
 
 function screenWelcome() {
   const logo = centerBlock(LOGO.split('\n').map(l => tc(l, 'accent')).join('\n'));
-  return [
+  const text = [
     '',
     `<span class="logo-wrap">${logo}</span>`,
     center(tdim('sight words terminal')),
     '',
     centerBlock(owlArt('idle')),
     '',
-    center(tc('Learn sight words, one keystroke at a time.', 'dim')),
-    '',
-    center(tc('Press ENTER to begin', 'accent') + ' ' + tc('█', 'accent cursor-blink')),
+    center(tc('Learn sight words, one tap at a time.', 'dim')),
     '',
   ].join('\n');
+  const cards = `<div style="padding:8px 0"><div class="tap-btn-large" data-action="">TAP TO START</div></div>`;
+  return { text, cards };
 }
 
 function screenProfiles() {
   const store = loadStore();
   const profiles = store.profiles;
-  let lines = ['', tb('  Who is playing?'), ''];
+  const text = ['', tb('  Who is playing?'), ''].join('\n');
 
+  let cardItems = '';
   if (profiles.length === 0) {
-    lines.push('  No profiles yet. Let\'s create one!');
-    lines.push('');
-    lines.push(opt('1', 'Create new profile'));
+    cardItems = `<div style="display:flex;flex-direction:column;gap:8px;padding:8px 0">
+      <div class="profile-card" data-action="+"><span class="avatar" style="font-size:24px">+</span><span class="name">Create new profile</span></div>
+    </div>`;
   } else {
+    cardItems = '<div style="display:flex;flex-direction:column;gap:8px;padding:8px 0">';
     profiles.forEach((p, i) => {
       const av = AVATARS.find(a => a.id === p.avatar) || AVATARS[0];
       const lvl = p.level !== null ? LEVELS[p.level].name : 'New';
-      lines.push(opt(i + 1, `${av.face}  ${p.name}  ${tdim('(' + lvl + ')')}`));
+      cardItems += `<div class="profile-card" data-action="${i + 1}"><span class="avatar">${av.face}</span><span class="name" style="flex:1">${esc(p.name)}</span><span class="level">${lvl}</span><span data-action="delete-${i}" style="padding:4px;opacity:0.4" onclick="event.stopPropagation()">${icon('trash2',14,'#f85149')}</span></div>`;
     });
-    lines.push('');
     if (profiles.length < 5) {
-      lines.push(opt('+', 'Create new profile'));
+      cardItems += `<div class="profile-card" data-action="+"><span class="avatar" style="font-size:24px">+</span><span class="name">New profile</span></div>`;
     }
+    cardItems += '</div>';
   }
-  lines.push('');
-  return lines.join('\n');
+  return { text, cards: cardItems };
 }
 
 function screenNewProfile() {
-  let lines = ['', tb('  Create Your Profile'), '', hr()];
-
   if (!S.newName) {
-    lines.push('');
-    lines.push('  What should I call you?');
-    lines.push('');
-    lines.push(tdim('  Type your name and press ENTER'));
-    lines.push('');
-  } else {
-    lines.push('');
-    lines.push(`  Name: ${tc(S.newName, 'accent')}`);
-    lines.push('');
-    lines.push('  Pick your avatar:');
-    lines.push('');
-    AVATARS.forEach((a, i) => {
-      const sel = i === S.newAvatar ? tc(' ◀', 'accent') : '';
-      lines.push(opt(i + 1, `${a.face}  ${a.name}${sel}`));
-    });
-    lines.push('');
-    lines.push(hr());
-    lines.push('');
-    lines.push(opt('go', `Create profile as ${tc(S.newName, 'accent')}`));
-    lines.push('');
+    // Name entry — shows input bar
+    const text = ['', tb('  Create Your Profile'), '', hr(), '', '  What should I call you?', '', tdim('  Type your name and press ENTER'), ''].join('\n');
+    return { text, cards: '' };
   }
-  return lines.join('\n');
+  // Avatar selection + Go button
+  const text = ['', tb('  Create Your Profile'), '', hr(), '', `  Name: ${tc(esc(S.newName), 'accent')}`, '', '  Pick your avatar:', ''].join('\n');
+  let cards = '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:8px 0">';
+  AVATARS.forEach((a, i) => {
+    const sel = i === S.newAvatar ? 'border-color:#f4845f;background:rgba(244,132,95,0.1)' : '';
+    cards += `<div class="tap-btn" data-action="${i + 1}" style="flex-direction:column;min-width:70px;${sel}"><span style="font-size:22px">${a.face}</span><span style="font-size:11px;color:#484f58">${a.name}</span></div>`;
+  });
+  cards += '</div>';
+  cards += `<div style="padding:8px 0"><div class="tap-btn-large" data-action="go">Go!</div></div>`;
+  return { text, cards };
 }
 
 function screenMenu() {
@@ -798,7 +1068,7 @@ function screenMenu() {
 
   let lines = [
     '',
-    `  ${av.face}  ${tc('Welcome back, ' + profile.name + '!', 'accent')}`,
+    `  ${av.face}  ${tc('Welcome back, ' + esc(profile.name) + '!', 'accent')}`,
     '',
   ];
 
@@ -806,85 +1076,97 @@ function screenMenu() {
     lines.push(`  Level: ${tc(lvlInfo.icon + ' ' + lvlInfo.name, 'blue')}  ${tdim('|')}  Mastered: ${tc(mastered + '/' + allWords.length, 'green')}`);
     lines.push(`  ${progressBar(mastered, allWords.length, 30)}`);
   } else {
-    lines.push(`  ${tc('New player — take the Skill Discovery to find your level!', 'yellow')}`);
+    lines.push(`  ${tc('New player — take the Skill Discovery!', 'yellow')}`);
   }
+  lines.push('');
 
-  lines.push('');
-  lines.push(hr());
-  lines.push('');
-  lines.push(opt('1', `${tc('▶', 'green')} Play`));
-  lines.push(opt('2', `${tc('◇', 'blue')} Skill Discovery`));
-  lines.push(opt('3', `${tc('▦', 'purple')} Progress`));
-  lines.push(opt('4', `${tc('?', 'yellow')} How to Play`));
-  lines.push('');
-  lines.push(hr());
-  lines.push('');
-  lines.push(`  ${tdim('[p] Switch profile')}  ${tdim('[x] Delete profile')}`);
-  lines.push('');
-  return lines.join('\n');
+  const text = lines.join('\n');
+
+  let cards = '<div class="menu-grid" style="padding:8px 0">';
+  cards += `<div class="menu-card" data-action="1"><span class="icon">${icon('play', 24, '#3fb950')}</span><span>Play</span></div>`;
+  cards += `<div class="menu-card" data-action="2"><span class="icon">${icon('compass', 24, '#58a6ff')}</span><span>Discovery</span></div>`;
+  cards += `<div class="menu-card" data-action="3"><span class="icon">${icon('barChart', 24, '#bc8cff')}</span><span>Progress</span></div>`;
+  cards += `<div class="menu-card" data-action="4"><span class="icon">${icon('helpCircle', 24, '#d29922')}</span><span>How to Play</span></div>`;
+  cards += '</div>';
+
+  return { text, cards };
 }
 
 function screenLevelSelect() {
   const profile = getActiveProfile();
-  let lines = ['', tb('  Choose Your Level'), ''];
+  const text = ['', tb('  Choose Your Level'), ''].join('\n');
 
+  let cards = '<div style="display:flex;flex-direction:column;gap:8px;padding:8px 0">';
   LEVELS.forEach((lvl, i) => {
     const words = WORDS[lvl.key];
     const mastered = words.filter(w => (profile.mastery[w]||{}).stars >= 5).length;
     const pct = Math.round((mastered / words.length) * 100);
-    const current = profile.level === i ? tc(' ◀ current', 'accent') : '';
-    lines.push(opt(i + 1, `${lvl.icon} ${lvl.name.padEnd(12)} ${progressBar(mastered, words.length, 12)} ${tc(pct + '%', pct === 100 ? 'green' : 'dim')}${current}`));
+    const current = profile.level === i ? ' style="border-color:#f4845f"' : '';
+    cards += `<div class="profile-card" data-action="${i + 1}"${current}>
+      <span class="avatar">${lvl.icon}</span>
+      <span style="flex:1"><span class="name">${lvl.name}</span><br><span style="font-size:12px;color:#484f58">${pct}% mastered</span></span>
+    </div>`;
   });
+  cards += '</div>';
+  cards += `<div style="padding:8px 0"><div class="tap-btn" data-action="0" style="width:100%;color:#484f58;gap:4px">${icon('chevronLeft',14,'#484f58')} Back</div></div>`;
 
-  lines.push('');
-  lines.push(hr());
-  lines.push(opt('0', tdim('Back')));
-  lines.push('');
-  return lines.join('\n');
+  return { text, cards };
 }
 
 function screenModeSelect() {
   const lvl = LEVELS[S.level];
-  let lines = [
-    '',
-    `  Level: ${tc(lvl.icon + ' ' + lvl.name, 'blue')}`,
-    '',
-    tb('  Choose Game Mode'),
-    '',
-  ];
+  const text = ['', `  Level: ${tc(lvl.icon + ' ' + lvl.name, 'blue')}`, '', tb('  Choose Game Mode'), ''].join('\n');
 
+  let cards = '<div class="menu-grid" style="padding:8px 0">';
   MODES.forEach((m, i) => {
-    lines.push(opt(i + 1, `${tc(m.icon, 'accent')} ${m.name}`));
-    lines.push(`       ${tdim(m.desc)}`);
-    lines.push('');
+    cards += `<div class="menu-card" data-action="${i + 1}"><span class="icon">${icon(m.ico, 24, '#f4845f')}</span><span>${m.name}</span></div>`;
   });
+  cards += '</div>';
+  cards += `<div style="padding:8px 0"><div class="tap-btn" data-action="0" style="width:100%;color:#484f58">${icon('chevronLeft', 14, '#484f58')} Back</div></div>`;
 
-  lines.push(hr());
-  lines.push(opt('0', tdim('Back')));
-  lines.push('');
-  return lines.join('\n');
+  return { text, cards };
 }
 
 function screenGame() {
   const word = S.words[S.wordIdx];
   const mode = MODES[S.mode];
   const lvl = LEVELS[S.level];
+  const isTap = S.inputMode === 'tap';
 
-  // Progress dots
-  const dots = S.words.map((_, i) => {
-    if (i < S.wordIdx) return S.results[i]?.correct ? tc('●', 'green') : tc('●', 'red');
-    if (i === S.wordIdx) return tc('◉', 'accent');
-    return tdim('○');
-  }).join(' ');
+  // Progress dots (only for non-rush)
+  let dots = '';
+  if (S.mode !== 3) {
+    dots = S.words.map((_, i) => {
+      if (i < S.wordIdx) return S.results[i]?.correct ? tc('●', 'green') : tc('●', 'red');
+      if (i === S.wordIdx) return tc('◉', 'accent');
+      return tdim('○');
+    }).join(' ');
+  }
 
-  let lines = [
-    `  ${tc(lvl.name, 'blue')} ${tdim('│')} ${tc(mode.icon + ' ' + mode.name, 'accent')} ${tdim('│')} Score: ${tc(S.score, 'yellow')}`,
-    '',
-    `  ${dots}`,
-    `  Streak: ${S.streak > 0 ? tc(S.streak + ' fire', 'accent') : tdim('0')}`,
-    '',
-    hr(),
-  ];
+  let lines = [];
+  let cards = '';
+
+  if (S.mode === 3) {
+    // Rush header
+    const bar = progressBar(S.rushTime, 60, 30);
+    lines = [
+      `  ${tc('▶ RUSH', 'accent')} ${tdim('│')} ${bar} ${tc(S.rushTime + 's', S.rushTime <= 10 ? 'red' : 'blue')}`,
+      '',
+      `  Score: ${tc(S.score, 'yellow')}  Streak: ${S.streak > 0 ? tc(S.streak, 'accent') : tdim('0')}`,
+      '',
+      hr(),
+      '',
+    ];
+  } else {
+    lines = [
+      `  ${tc(lvl.name, 'blue')} ${tdim('│')} ${tc(mode.emoji + ' ' + mode.name, 'accent')} ${tdim('│')} Score: ${tc(S.score, 'yellow')}`,
+      '',
+      `  ${dots}`,
+      `  Streak: ${S.streak > 0 ? tc(S.streak + ' fire', 'accent') : tdim('0')}`,
+      '',
+      hr(),
+    ];
+  }
 
   if (S.mode === 0) { // Flash
     if (S.phase === 'show') {
@@ -901,44 +1183,84 @@ function screenGame() {
       lines.push('');
       if (S.attempts > 0) {
         lines.push(center(tc(rand(NUDGES), 'yellow')));
-        if (S.attempts >= 1) {
+        if (S.attempts >= 1 && !isTap) {
           const hint = word[0] + '_'.repeat(Math.max(0, word.length - 2)) + (word.length > 1 ? word[word.length-1] : '');
           lines.push(center(tdim('Hint: ' + hint.split('').join(' '))));
         }
         lines.push('');
+      }
+      if (isTap) {
+        cards = renderWordCards(S.choices, word);
       }
     }
   } else if (S.mode === 1) { // Fill
     lines.push('');
     lines.push(center(tdim('Complete the word:')));
     lines.push('');
-    lines.push(center(tc(tb(S.hint.split('').join(' ')), 'fg')));
-    lines.push('');
-    if (S.attempts > 0) {
-      lines.push(center(tc(rand(NUDGES), 'yellow')));
+    if (isTap) {
+      // Show slots with filled letters
+      const slots = S.hint.split('');
+      const filled = S._filledLetters || [];
+      let slotHtml = '<div style="display:flex;gap:6px;justify-content:center;padding:4px 0">';
+      for (let i = 0; i < slots.length; i++) {
+        if (slots[i] === '_') {
+          const f = filled.find(x => x.pos === i);
+          if (f) {
+            slotHtml += `<div class="letter-slot filled">${f.letter.toUpperCase()}</div>`;
+          } else {
+            slotHtml += `<div class="letter-slot"></div>`;
+          }
+        } else {
+          slotHtml += `<div class="letter-slot given">${slots[i].toUpperCase()}</div>`;
+        }
+      }
+      slotHtml += '</div>';
       lines.push('');
+      if (S.attempts > 0) {
+        lines.push(center(tc(rand(NUDGES), 'yellow')));
+        lines.push('');
+      }
+      cards = slotHtml + renderLetterTiles(S.availableLetters, true);
+    } else {
+      lines.push(center(tc(tb(S.hint.split('').join(' ')), 'fg')));
+      lines.push('');
+      if (S.attempts > 0) {
+        lines.push(center(tc(rand(NUDGES), 'yellow')));
+        lines.push('');
+      }
     }
   } else if (S.mode === 2) { // Scramble
     lines.push('');
     lines.push(center(tdim('Unscramble the letters:')));
     lines.push('');
-    lines.push(center(tc(tb(S.hint.split('').join(' ')), 'purple')));
-    lines.push(center(tdim(`(${word.length} letters)`)));
-    lines.push('');
-    if (S.attempts > 0) {
-      lines.push(center(tc(rand(NUDGES), 'yellow')));
+    if (isTap) {
+      // Show target slots
+      let slotHtml = '<div style="display:flex;gap:6px;justify-content:center;padding:4px 0">';
+      for (let i = 0; i < word.length; i++) {
+        const sel = S.selectedLetters[i];
+        if (sel) {
+          slotHtml += `<div class="letter-slot filled">${sel.letter.toUpperCase()}</div>`;
+        } else {
+          slotHtml += `<div class="letter-slot"></div>`;
+        }
+      }
+      slotHtml += '</div>';
       lines.push('');
+      if (S.attempts > 0) {
+        lines.push(center(tc(rand(NUDGES), 'yellow')));
+        lines.push('');
+      }
+      cards = slotHtml + renderLetterTiles(S.availableLetters, true);
+    } else {
+      lines.push(center(tc(tb(S.hint.split('').join(' ')), 'purple')));
+      lines.push(center(tdim(`(${word.length} letters)`)));
+      lines.push('');
+      if (S.attempts > 0) {
+        lines.push(center(tc(rand(NUDGES), 'yellow')));
+        lines.push('');
+      }
     }
   } else if (S.mode === 3) { // Rush
-    const bar = progressBar(S.rushTime, 60, 30);
-    lines = [
-      `  ${tc('▶ RUSH', 'accent')} ${tdim('│')} ${bar} ${tc(S.rushTime + 's', S.rushTime <= 10 ? 'red' : 'blue')}`,
-      '',
-      `  Score: ${tc(S.score, 'yellow')}  Streak: ${S.streak > 0 ? tc(S.streak, 'accent') : tdim('0')}`,
-      '',
-      hr(),
-      '',
-    ];
     if (S.rushActive) {
       lines.push(center(tc(tb(word.toUpperCase()), 'fg')));
       lines.push('');
@@ -946,23 +1268,31 @@ function screenGame() {
         lines.push(center(tc('Nope! Try again.', 'red')));
         lines.push('');
       }
+      if (isTap) {
+        cards = renderWordCards(S.choices, word);
+      }
     } else {
       lines.push(center(tc('Time is up!', 'yellow')));
       lines.push('');
-      lines.push(center(`You typed ${tc(S.correct, 'green')} words correctly!`));
+      lines.push(center(`You got ${tc(S.correct, 'green')} words!`));
       lines.push(center(`Score: ${tc(S.score, 'yellow')}  Best streak: ${tc(S.bestStreak, 'accent')}`));
       lines.push('');
-      lines.push(hr());
-      lines.push('');
-      lines.push(opt('1', 'Play again'));
-      lines.push(opt('2', 'Change mode'));
-      lines.push(opt('0', 'Menu'));
-      lines.push('');
+      cards = `<div style="display:flex;flex-direction:column;gap:8px;padding:8px 0">
+        <div class="tap-btn-large" data-action="1">${icon('rotateCcw',18,'#f4845f')} Play Again</div>
+        <div style="display:flex;gap:8px">
+          <div class="tap-btn" data-action="2" style="flex:1">Change Mode</div>
+          <div class="tap-btn" data-action="0" style="flex:1;color:#484f58">Menu</div>
+        </div>
+      </div>`;
     }
   } else if (S.mode === 4) { // Story
-    const pool = SENTENCES[word];
-    const sentence = pool ? pool[Math.floor(Math.random() * pool.length)] : `The word is ___.`;
-    const display = sentence.replace('___', tc(tb('___'), 'accent'));
+    // Use a stable sentence (don't re-randomize on each render)
+    if (!S._storySentence || S._storyWord !== word) {
+      const pool = SENTENCES[word];
+      S._storySentence = pool ? pool[Math.floor(Math.random() * pool.length)] : `The word is ___.`;
+      S._storyWord = word;
+    }
+    const display = S._storySentence.replace('___', tc(tb('___'), 'accent'));
     lines.push('');
     lines.push(center(tdim('Fill in the blank:')));
     lines.push('');
@@ -972,9 +1302,40 @@ function screenGame() {
       lines.push(center(tc(rand(NUDGES), 'yellow')));
       lines.push('');
     }
+    if (isTap) {
+      cards = renderWordCards(S.choices, word);
+    }
   }
 
-  return lines.join('\n');
+  return { text: lines.join('\n'), cards };
+}
+
+// Render 4 word choice cards in a 2x2 grid
+function renderWordCards(choices, correctWord) {
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0">';
+  choices.forEach(w => {
+    let extra = '';
+    if (S.tappedCard === w) {
+      extra = w === correctWord ? ' correct' : ' wrong card-shake';
+    }
+    html += `<div class="word-card${extra}" data-action="${esc(w)}">${esc(w.toUpperCase())}</div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+// Render letter tiles + undo button
+function renderLetterTiles(letters, showUndo) {
+  let html = '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:12px 0">';
+  letters.forEach((l, i) => {
+    const usedClass = l.used ? ' used' : '';
+    html += `<div class="letter-tile${usedClass}" data-action="letter-tap" data-letter="${esc(l.letter)}" data-idx="${i}">${l.letter.toUpperCase()}</div>`;
+  });
+  html += '</div>';
+  if (showUndo) {
+    html += `<div style="text-align:center;padding:4px 0"><div class="tap-btn" data-action="undo-letter" style="font-size:13px;color:#484f58;display:inline-flex;gap:4px">${icon('undo',14,'#484f58')} Undo</div></div>`;
+  }
+  return html;
 }
 
 function screenFeedback() {
@@ -1001,7 +1362,7 @@ function screenFeedback() {
     lines.push(center(tc('You\'ll get it next time!', 'yellow')));
   }
   lines.push('');
-  return lines.join('\n');
+  return { text: lines.join('\n'), cards: '' };
 }
 
 function screenResults() {
@@ -1015,7 +1376,7 @@ function screenResults() {
     '',
     center(tc(tb('Round Complete!'), 'accent')),
     '',
-    `  Score: ${tc(S.score, 'yellow')}    Correct: ${tc(S.correct + '/' + S.words.length, pct >= 80 ? 'green' : 'blue')}    Streak: ${tc(S.bestStreak, 'accent')}`,
+    `  Score: ${tc(S.score, 'yellow')}  Correct: ${tc(S.correct + '/' + S.words.length, pct >= 80 ? 'green' : 'blue')}  Streak: ${tc(S.bestStreak, 'accent')}`,
     '',
     hr(),
     '',
@@ -1026,16 +1387,18 @@ function screenResults() {
     const m = getWordMastery(profile, r.word);
     lines.push(`  ${icon}  ${r.word.padEnd(12)} ${stars(m.stars)}`);
   });
+  lines.push('');
 
-  lines.push('');
-  lines.push(hr());
-  lines.push('');
-  lines.push(opt('1', 'Play again'));
-  lines.push(opt('2', 'Change mode'));
-  lines.push(opt('3', 'Change level'));
-  lines.push(opt('0', 'Menu'));
-  lines.push('');
-  return lines.join('\n');
+  const text = lines.join('\n');
+  let cards = `<div style="display:flex;flex-direction:column;gap:8px;padding:8px 0">
+    <div class="tap-btn-large" data-action="1">${icon('rotateCcw',18,'#f4845f')} Play Again</div>
+    <div style="display:flex;gap:8px">
+      <div class="tap-btn" data-action="2" style="flex:1">Change Mode</div>
+      <div class="tap-btn" data-action="3" style="flex:1">Change Level</div>
+    </div>
+    <div class="tap-btn" data-action="0" style="width:100%;color:#484f58">Menu</div>
+  </div>`;
+  return { text, cards };
 }
 
 function screenProgress() {
@@ -1043,7 +1406,7 @@ function screenProgress() {
   const av = AVATARS.find(a => a.id === profile.avatar) || AVATARS[0];
   let lines = [
     '',
-    `  ${av.face}  ${tc(profile.name + '\'s Progress', 'accent')}`,
+    `  ${av.face}  ${tc(esc(profile.name) + '\'s Progress', 'accent')}`,
     '',
     hr(),
     '',
@@ -1070,12 +1433,12 @@ function screenProgress() {
   lines.push(hr());
   lines.push('');
   lines.push(`  Total: ${tc(totalMastered + '/' + totalWords + ' words mastered', 'green')}`);
-  lines.push(`  Sessions: ${tc(profile.stats.sessionsPlayed, 'blue')}  Total Score: ${tc(profile.stats.totalScore, 'yellow')}  Best Streak: ${tc(profile.stats.bestStreak, 'accent')}`);
+  lines.push(`  Sessions: ${tc(profile.stats.sessionsPlayed, 'blue')}  Score: ${tc(profile.stats.totalScore, 'yellow')}  Streak: ${tc(profile.stats.bestStreak, 'accent')}`);
   lines.push('');
-  lines.push(hr());
-  lines.push(opt('0', tdim('Back')));
-  lines.push('');
-  return lines.join('\n');
+
+  const text = lines.join('\n');
+  const cards = `<div style="padding:8px 0"><div class="tap-btn" data-action="0" style="width:100%;color:#484f58;gap:4px">${icon('chevronLeft',14,'#484f58')} Back</div></div>`;
+  return { text, cards };
 }
 
 function screenHowToPlay() {
@@ -1087,24 +1450,24 @@ function screenHowToPlay() {
     '',
     `  ${tc('✦ Flash', 'accent')}`,
     `  A word flashes on screen. After it`,
-    `  disappears, type it from memory!`,
+    `  disappears, tap the right word!`,
     '',
     `  ${tc('◧ Fill', 'accent')}`,
-    `  Some letters are replaced with ${tc('_', 'fg')}.`,
-    `  Type the complete word.`,
+    `  Some letters are missing. Tap the`,
+    `  right letters to complete the word.`,
     '',
     `  ${tc('◈ Scramble', 'accent')}`,
-    `  Letters are jumbled up. Figure out`,
-    `  the word and type it correctly.`,
+    `  Letters are jumbled up. Tap them`,
+    `  in the right order!`,
     '',
     `  ${tc('▶ Rush', 'accent')}`,
-    `  60 seconds on the clock! Type as`,
-    `  many words as you can, as fast as`,
-    `  you can. Build streaks for bonuses!`,
+    `  60 seconds on the clock! Tap the`,
+    `  matching word as fast as you can.`,
+    `  Build streaks for bonuses!`,
     '',
     `  ${tc('▤ Story', 'accent')}`,
     `  Read a sentence with a blank.`,
-    `  Type the missing word.`,
+    `  Tap the missing word.`,
     '',
     hr(),
     '',
@@ -1117,16 +1480,16 @@ function screenHowToPlay() {
     `  across sessions to earn ${tc('★', 'yellow')} stars.`,
     `  5 stars = fully mastered!`,
     '',
-    hr(),
-    opt('0', tdim('Back')),
-    '',
   ];
-  return lines.join('\n');
+  const text = lines.join('\n');
+  const cards = `<div style="padding:8px 0"><div class="tap-btn" data-action="0" style="width:100%;color:#484f58;gap:4px">${icon('chevronLeft',14,'#484f58')} Back</div></div>`;
+  return { text, cards };
 }
 
 function screenDiscovery() {
   const total = S.discoveryWords.length;
   const idx = S.discoveryIdx;
+  const isTap = S.inputMode === 'tap';
 
   if (idx >= total) {
     // Show results
@@ -1158,9 +1521,10 @@ function screenDiscovery() {
     lines.push('');
     lines.push(center(`You are a ${tc(tb(LEVELS[bestLevel].icon + ' ' + LEVELS[bestLevel].name), 'blue')}!`));
     lines.push('');
-    lines.push(center(tdim('Press ENTER to continue')));
-    lines.push('');
-    return lines.join('\n');
+
+    const text = lines.join('\n');
+    const cards = `<div style="padding:8px 0"><div class="tap-btn-large" data-action="">Continue</div></div>`;
+    return { text, cards };
   }
 
   const entry = S.discoveryWords[idx];
@@ -1181,6 +1545,8 @@ function screenDiscovery() {
     '',
   ];
 
+  let cards = '';
+
   if (S.discoveryPhase === 'show') {
     lines.push(center(tdim('Look at this word:')));
     lines.push('');
@@ -1188,27 +1554,89 @@ function screenDiscovery() {
     lines.push('');
     lines.push(center(tdim('Remember it...')));
   } else {
-    lines.push(center(tc('Type the word you saw:', 'blue')));
+    lines.push(center(tc('What was the word?', 'blue')));
     lines.push('');
+    if (isTap) {
+      cards = renderWordCards(S.discoveryChoices || [], word);
+    }
   }
   lines.push('');
-  return lines.join('\n');
+  return { text: lines.join('\n'), cards };
 }
 
 function screenDeleteConfirm() {
-  const profile = getActiveProfile();
-  return [
+  const store = loadStore();
+  const profile = store.profiles[S.deleteProfileIdx];
+  if (!profile) return { text: '', cards: '' };
+  const text = [
     '',
     center(tc(tb('Delete Profile?'), 'red')),
     '',
     center(`Are you sure you want to delete`),
-    center(`${tc(profile.name, 'accent')}'s profile?`),
+    center(`${tc(esc(profile.name), 'accent')}'s profile?`),
     center(tdim('This cannot be undone.')),
     '',
-    opt('yes', tc('Delete it', 'red')),
-    opt('no', 'Keep it'),
-    '',
   ].join('\n');
+  const cards = `<div style="display:flex;gap:8px;padding:8px 0">
+    <div class="tap-btn" data-action="yes" style="flex:1;color:#f85149;border-color:#f85149">Delete</div>
+    <div class="tap-btn" data-action="no" style="flex:1">Keep</div>
+  </div>`;
+  return { text, cards };
+}
+
+// ─── LETTER TAP HANDLING ─────────────────────────────────────
+function handleLetterTap(letter, idx) {
+  if (S.screen !== 'game') return;
+  const word = S.words[S.wordIdx];
+
+  if (S.mode === 2) {
+    // Scramble: tap letters in order
+    if (S.availableLetters[idx].used) return;
+    S.selectedLetters.push({ letter, idx });
+    S.availableLetters[idx].used = true;
+    render();
+    // Check if complete
+    if (S.selectedLetters.length === word.length) {
+      const answer = S.selectedLetters.map(x => x.letter).join('');
+      setTimeout(() => checkAnswer(answer), 300);
+    }
+  } else if (S.mode === 1) {
+    // Fill: tap letter to fill next empty slot
+    const hint = S.hint;
+    const slots = hint.split('');
+    // Find next unfilled slot
+    let filled = [...(S._filledLetters || [])];
+    const blanks = [];
+    for (let i = 0; i < slots.length; i++) {
+      if (slots[i] === '_') blanks.push(i);
+    }
+    const nextBlank = blanks[filled.length];
+    if (nextBlank === undefined) return;
+    filled.push({ letter, idx, pos: nextBlank });
+    S._filledLetters = filled;
+    S.availableLetters[idx].used = true;
+    render();
+    // Check if all blanks filled
+    if (filled.length === blanks.length) {
+      const result = [...slots];
+      filled.forEach(f => { result[f.pos] = f.letter; });
+      const answer = result.join('');
+      setTimeout(() => checkAnswer(answer), 300);
+    }
+  }
+}
+
+function handleLetterUndo() {
+  if (S.screen !== 'game') return;
+  if (S.mode === 2 && S.selectedLetters.length > 0) {
+    const last = S.selectedLetters.pop();
+    S.availableLetters[last.idx].used = false;
+    render();
+  } else if (S.mode === 1 && S._filledLetters && S._filledLetters.length > 0) {
+    const last = S._filledLetters.pop();
+    S.availableLetters[last.idx].used = false;
+    render();
+  }
 }
 
 // ─── GAME ENGINE ─────────────────────────────────────────────
@@ -1242,7 +1670,43 @@ function startRound() {
 
 function prepareWord() {
   const word = S.words[S.wordIdx];
+  const levelKey = LEVELS[S.level].key;
   S.attempts = 0;
+  S.tappedCard = null;
+  S._filledLetters = [];
+  S._storySentence = null;
+  S._storyWord = null;
+
+  // Prepare tap-mode data
+  if (S.inputMode === 'tap') {
+    if (S.mode === 0 || S.mode === 3 || S.mode === 4) {
+      // Word card modes: generate 3 distractors
+      const distractors = generateDistractors(word, 3, levelKey);
+      S.choices = shuffle([word, ...distractors]);
+    } else if (S.mode === 1) {
+      // Fill: generate letter tiles for missing + decoys
+      S.hint = makeMissing(word);
+      const missing = [];
+      for (let i = 0; i < word.length; i++) {
+        if (S.hint[i] === '_') missing.push(word[i]);
+      }
+      // Add 2-3 decoy letters
+      const decoyPool = 'abcdefghijklmnopqrstuvwxyz'.split('').filter(c => !missing.includes(c));
+      const decoys = shuffle(decoyPool).slice(0, Math.min(3, Math.max(2, missing.length)));
+      S.availableLetters = shuffle([...missing, ...decoys]).map((l, i) => ({ letter: l, idx: i, used: false }));
+      S._filledLetters = [];
+    } else if (S.mode === 2) {
+      // Scramble: scrambled letter tiles
+      const scrambled = makeScramble(word);
+      S.hint = scrambled;
+      S.availableLetters = scrambled.split('').map((l, i) => ({ letter: l, idx: i, used: false }));
+      S.selectedLetters = [];
+    }
+  } else {
+    // Type mode: same as before
+    if (S.mode === 1) S.hint = makeMissing(word);
+    else if (S.mode === 2) S.hint = makeScramble(word);
+  }
 
   if (S.mode === 0) { // Flash
     S.phase = 'show';
@@ -1253,23 +1717,13 @@ function prepareWord() {
       S.phase = 'type';
       S.inputEnabled = true;
       render();
-      $('input').focus();
+      if (S.inputMode === 'type') $('input').focus();
     }, dur);
-  } else if (S.mode === 1) { // Fill
-    S.hint = makeMissing(word);
-    S.phase = 'type';
-    S.inputEnabled = true;
-    render();
-  } else if (S.mode === 2) { // Scramble
-    S.hint = makeScramble(word);
-    S.phase = 'type';
-    S.inputEnabled = true;
-    render();
   } else if (S.mode === 3) { // Rush
     S.phase = 'type';
     S.inputEnabled = true;
     render();
-  } else if (S.mode === 4) { // Story
+  } else {
     S.phase = 'type';
     S.inputEnabled = true;
     render();
@@ -1300,8 +1754,15 @@ function startRushTimer() {
 function checkAnswer(answer) {
   const word = S.words[S.wordIdx];
   const correct = answer.toLowerCase().trim() === word.toLowerCase();
+  const isTap = S.inputMode === 'tap';
+
+  // Set tapped card for visual feedback (word-card modes in tap mode)
+  if (isTap && (S.mode === 0 || S.mode === 3 || S.mode === 4)) {
+    S.tappedCard = answer.toLowerCase().trim();
+  }
 
   if (correct) {
+    sndCorrect();
     const points = S.attempts === 0 ? 10 : 5;
     S.streak++;
     S.score += points + Math.min(S.streak, 5);
@@ -1312,29 +1773,41 @@ function checkAnswer(answer) {
     const profile = getActiveProfile();
     updateMastery(profile, word, true);
 
-    if (S.mode === 3) { // Rush — immediate next word
-      sndRush();
+    if (S.mode === 3 && !isTap) {
       S.wordIdx++;
       if (S.wordIdx >= S.words.length) {
-        // Refill pool
         S.words = [...S.words, ...pickWords(LEVELS[S.level].key, 20)];
       }
       prepareWord();
       return;
     }
 
-    S.lastCorrect = true;
-    S.lastWord = word;
-    S.screen = 'feedback';
+    // Flash green briefly, then next word
     render();
-    setTimeout(() => nextWord(), 1100);
+    setTimeout(() => {
+      S.tappedCard = null;
+      if (S.mode === 3) {
+        S.wordIdx++;
+        if (S.wordIdx >= S.words.length) {
+          S.words = [...S.words, ...pickWords(LEVELS[S.level].key, 20)];
+        }
+        prepareWord();
+      } else {
+        nextWord();
+      }
+    }, isTap ? 400 : 150);
   } else {
     sndWrong();
     S.attempts++;
     S.streak = 0;
 
-    if (S.mode === 3) { // Rush — just shake, try again
-      render();
+    if (S.mode === 3) {
+      if (isTap) {
+        render();
+        setTimeout(() => { S.tappedCard = null; render(); }, 400);
+      } else {
+        render();
+      }
       return;
     }
 
@@ -1342,13 +1815,16 @@ function checkAnswer(answer) {
       S.results.push({ word, correct: false, attempts: S.attempts });
       const profile = getActiveProfile();
       updateMastery(profile, word, false);
-      S.lastCorrect = false;
-      S.lastWord = word;
-      S.screen = 'feedback';
       render();
-      setTimeout(() => nextWord(), 1800);
+      setTimeout(() => { S.tappedCard = null; nextWord(); }, isTap ? 600 : 300);
     } else {
+      if (isTap && (S.mode === 1 || S.mode === 2)) {
+        S.selectedLetters = [];
+        S._filledLetters = [];
+        S.availableLetters.forEach(l => l.used = false);
+      }
       render();
+      if (isTap) setTimeout(() => { S.tappedCard = null; render(); }, 500);
     }
   }
 }
@@ -1396,66 +1872,112 @@ function showDiscoveryWord() {
   }
   S.discoveryPhase = 'show';
   S.inputEnabled = false;
+  S.tappedCard = null;
   render();
-  const word = S.discoveryWords[S.discoveryIdx].word;
+  const entry = S.discoveryWords[S.discoveryIdx];
+  const word = entry.word;
+  const levelKey = Object.keys(WORDS)[entry.level];
+
+  // Prepare choices for tap mode
+  if (S.inputMode === 'tap') {
+    const distractors = generateDistractors(word, 3, levelKey);
+    S.discoveryChoices = shuffle([word, ...distractors]);
+  }
+
   const dur = Math.max(2500, Math.min(5000, word.length * 500));
   S.timer = setTimeout(() => {
     S.discoveryPhase = 'type';
     S.inputEnabled = true;
     render();
-    $('input').focus();
+    if (S.inputMode === 'type') $('input').focus();
   }, dur);
 }
 
 function checkDiscoveryAnswer(answer) {
   const entry = S.discoveryWords[S.discoveryIdx];
   const correct = answer.toLowerCase().trim() === entry.word.toLowerCase();
-  S.discoveryResults.push({ word: entry.word, level: entry.level, correct });
-  if (!correct) sndWrong();
-  S.discoveryIdx++;
-  if (S.discoveryIdx >= S.discoveryWords.length) {
-    sndLevelUp(); // Discovery complete fanfare
-    render(); // Show results
+  const isTap = S.inputMode === 'tap';
+
+  if (isTap) {
+    S.tappedCard = answer.toLowerCase().trim();
+    render(); // show green/red card
+  }
+
+  if (correct) sndCorrect(); else sndWrong();
+
+  const proceed = () => {
+    S.tappedCard = null;
+    S.discoveryResults.push({ word: entry.word, level: entry.level, correct });
+    S.discoveryIdx++;
+    if (S.discoveryIdx >= S.discoveryWords.length) {
+      sndLevelUp();
+      render();
+    } else {
+      showDiscoveryWord();
+    }
+  };
+
+  if (isTap) {
+    setTimeout(proceed, 500);
   } else {
-    showDiscoveryWord();
+    proceed();
   }
 }
 
 // ─── RENDER ──────────────────────────────────────────────────
+// Helper: are we in a game answer screen where type/tap split matters?
+function isGameAnswerScreen() {
+  if (S.screen === 'game') return true;
+  if (S.screen === 'discovery' && S.discoveryIdx < S.discoveryWords.length) return true;
+  return false;
+}
+
+// Should the input bar be shown?
+function shouldShowInputBar() {
+  // Always show for profile name entry
+  if (S.screen === 'newProfile' && !S.newName) return true;
+  // In type mode during game answer screens, show input bar
+  if (S.inputMode === 'type' && isGameAnswerScreen()) return true;
+  return false;
+}
+
 function render() {
   updateW();
   const scr = $('screen');
   const input = $('input');
-  let content = '';
+  const tapArea = $('tap-area');
+  const inputBar = $('input-bar');
+  let result = '';
+  let cards = '';
   let placeholder = 'Type here...';
 
   switch (S.screen) {
     case 'welcome':
-      content = screenWelcome();
+      result = screenWelcome();
       placeholder = 'Press ENTER...';
       break;
     case 'profiles':
-      content = screenProfiles();
+      result = screenProfiles();
       placeholder = 'Choose profile...';
       break;
     case 'newProfile':
-      content = screenNewProfile();
+      result = screenNewProfile();
       placeholder = S.newName ? 'Pick avatar (1-5) or type "go"...' : 'Your name...';
       break;
     case 'menu':
-      content = screenMenu();
+      result = screenMenu();
       placeholder = 'Choose option...';
       break;
     case 'levelSelect':
-      content = screenLevelSelect();
+      result = screenLevelSelect();
       placeholder = 'Choose level (1-5)...';
       break;
     case 'modeSelect':
-      content = screenModeSelect();
+      result = screenModeSelect();
       placeholder = 'Choose mode (1-5)...';
       break;
     case 'game':
-      content = screenGame();
+      result = screenGame();
       if (S.mode === 0 && S.phase === 'show') {
         placeholder = 'Watch the word...';
       } else if (S.mode === 3 && !S.rushActive) {
@@ -1464,24 +1986,20 @@ function render() {
         placeholder = 'Type your answer...';
       }
       break;
-    case 'feedback':
-      content = screenFeedback();
-      placeholder = '';
-      break;
     case 'results':
-      content = screenResults();
+      result = screenResults();
       placeholder = 'Choose option...';
       break;
     case 'progress':
-      content = screenProgress();
+      result = screenProgress();
       placeholder = 'Press 0 to go back...';
       break;
     case 'howToPlay':
-      content = screenHowToPlay();
+      result = screenHowToPlay();
       placeholder = 'Press 0 to go back...';
       break;
     case 'discovery':
-      content = screenDiscovery();
+      result = screenDiscovery();
       if (S.discoveryIdx >= S.discoveryWords.length) {
         placeholder = 'Press ENTER...';
       } else {
@@ -1489,18 +2007,47 @@ function render() {
       }
       break;
     case 'deleteConfirm':
-      content = screenDeleteConfirm();
+      result = screenDeleteConfirm();
       placeholder = 'Type yes or no...';
       break;
   }
 
-  scr.innerHTML = content;
-  scr.className = 'px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[16px] sm:text-[18px] leading-[1.6] min-h-[40vh] sm:min-h-[60vh] whitespace-pre-wrap fade-in';
-  input.placeholder = placeholder;
-  input.disabled = !S.inputEnabled;
-  if (S.inputEnabled) input.focus();
+  // Handle {text, cards} return or plain string
+  let content = '';
+  if (typeof result === 'object' && result !== null) {
+    content = result.text || '';
+    cards = result.cards || '';
+  } else {
+    content = result;
+  }
 
-  // Update title bar and back button
+  // In type mode during game screens, suppress cards and show input bar
+  if (S.inputMode === 'type' && isGameAnswerScreen()) {
+    cards = '';
+  }
+
+  scr.innerHTML = content;
+  scr.className = 'px-4 sm:px-6 pt-4 pb-2 text-t-fg text-[16px] sm:text-[18px] leading-[1.6] whitespace-pre-wrap fade-in flex-1 min-h-0 overflow-y-auto';
+
+  // Tap area visibility
+  if (cards) {
+    tapArea.innerHTML = cards;
+    tapArea.classList.remove('hidden');
+  } else {
+    tapArea.innerHTML = '';
+    tapArea.classList.add('hidden');
+  }
+
+  // Input bar visibility
+  const showInput = shouldShowInputBar();
+  inputBar.style.display = showInput ? '' : 'none';
+  if (showInput) {
+    input.placeholder = placeholder;
+    input.disabled = !S.inputEnabled;
+    if (S.inputEnabled) input.focus();
+  }
+
+  // Update title bar, back button, mode button
   const profile = getActiveProfile();
   const titleBar = $('title-bar');
   const backBtn = $('back-btn');
@@ -1510,9 +2057,31 @@ function render() {
     titleBar.textContent = 'owlsh v1.0';
   }
   const hasBack = S.screen !== 'welcome';
-  if (backBtn) backBtn.className = hasBack ? 'text-t-dim text-xs px-1 visible' : 'text-t-dim text-xs px-1';
-  const muteBtn = $('mute-btn');
-  if (muteBtn) muteBtn.textContent = muted ? '🔇' : '🔊';
+  if (backBtn) {
+    backBtn.className = hasBack ? 'text-xs visible' : '';
+    backBtn.innerHTML = hasBack ? `${icon('chevronLeft',14,'#8b949e')} <span style="color:#8b949e">back</span>` : '';
+  }
+  // Update settings panel
+  const sMuteRow = $('s-mute-row');
+  if (sMuteRow) sMuteRow.innerHTML = muted ? `${icon('volumeX',14,'#484f58')} <span style="margin-left:6px">Sound off</span>` : `${icon('volume2',14)} <span style="margin-left:6px">Sound on</span>`;
+  const sModeRow = $('s-mode-row');
+  if (sModeRow) sModeRow.innerHTML = S.inputMode === 'tap' ? `${icon('hand',14)} <span style="margin-left:6px">Tap mode</span>` : `${icon('keyboard',14)} <span style="margin-left:6px">Type mode</span>`;
+  const sLevels = $('s-levels');
+  if (sLevels) {
+    const profile = getActiveProfile();
+    const inGame = isInActiveGame();
+    let html = '';
+    if (profile) {
+      LEVELS.forEach((lvl, i) => {
+        const active = profile.level === i ? 'color:#f4845f;' : '';
+        const cls = inGame ? ' disabled' : '';
+        html += `<div class="settings-row${cls}" onclick="setLevel(${i})"><span>${lvl.icon} ${lvl.name}</span><span class="settings-val" style="${active}">${profile.level === i ? '◀' : ''}</span></div>`;
+      });
+    } else {
+      html = '<div class="settings-row disabled"><span style="color:#484f58">No profile</span></div>';
+    }
+    sLevels.innerHTML = html;
+  }
 
   // Scale logo to fit on small screens
   const logoEl = scr.querySelector('.logo-wrap');
@@ -1534,6 +2103,8 @@ function render() {
       logoEl.style.marginBottom = '';
     }
   }
+
+  saveSession();
 }
 
 // ─── INPUT ROUTER ────────────────────────────────────────────
@@ -1554,6 +2125,12 @@ function handleInput(value) {
         S.newName = '';
         S.newAvatar = 0;
         S.screen = 'newProfile';
+      } else if (v.startsWith('delete-')) {
+        const delIdx = parseInt(v.split('-')[1]);
+        if (delIdx >= 0 && delIdx < store.profiles.length) {
+          S.deleteProfileIdx = delIdx;
+          S.screen = 'deleteConfirm';
+        }
       } else {
         const idx = parseInt(v) - 1;
         if (idx >= 0 && idx < store.profiles.length) {
@@ -1598,22 +2175,26 @@ function handleInput(value) {
         S.screen = 'progress';
       } else if (v === '4') {
         S.screen = 'howToPlay';
-      } else if (vl === 'p') {
-        S.screen = 'profiles';
-      } else if (vl === 'x') {
-        S.screen = 'deleteConfirm';
       }
       break;
 
     case 'deleteConfirm':
       if (vl === 'yes') {
         const store = loadStore();
-        store.profiles.splice(store.activeProfile, 1);
-        store.activeProfile = store.profiles.length > 0 ? 0 : null;
+        const delIdx = S.deleteProfileIdx;
+        store.profiles.splice(delIdx, 1);
+        // Fix active profile index after removal
+        if (store.activeProfile === delIdx) {
+          store.activeProfile = store.profiles.length > 0 ? 0 : null;
+        } else if (store.activeProfile > delIdx) {
+          store.activeProfile--;
+        }
         saveStore(store);
-        S.screen = store.profiles.length > 0 ? 'profiles' : 'profiles';
+        S.deleteProfileIdx = null;
+        S.screen = 'profiles';
       } else {
-        S.screen = 'menu';
+        S.deleteProfileIdx = null;
+        S.screen = 'profiles';
       }
       break;
 
@@ -1651,9 +2232,6 @@ function handleInput(value) {
       }
       break;
 
-    case 'feedback':
-      return; // auto-advancing
-
     case 'results':
       if (v === '1') { startRound(); return; }
       if (v === '2') { S.screen = 'modeSelect'; break; }
@@ -1684,6 +2262,36 @@ function handleInput(value) {
   render();
 }
 
+// ─── TAP HANDLING ────────────────────────────────────────────
+{
+  const tapArea = $('tap-area');
+  tapArea.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const action = btn.dataset.action;
+    if (action === 'letter-tap') {
+      handleLetterTap(btn.dataset.letter, parseInt(btn.dataset.idx));
+    } else if (action === 'undo-letter') {
+      handleLetterUndo();
+    } else {
+      handleInput(action);
+    }
+  });
+  // Touch feedback
+  tapArea.addEventListener('touchstart', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (btn) btn.classList.add('pressing');
+  }, { passive: true });
+  tapArea.addEventListener('touchend', () => {
+    tapArea.querySelectorAll('.pressing').forEach(el => el.classList.remove('pressing'));
+  }, { passive: true });
+  tapArea.addEventListener('touchcancel', () => {
+    tapArea.querySelectorAll('.pressing').forEach(el => el.classList.remove('pressing'));
+  }, { passive: true });
+}
+
 // ─── INIT ────────────────────────────────────────────────────
 const input = $('input');
 
@@ -1692,7 +2300,7 @@ function goBack() {
   if (S.timer) { clearTimeout(S.timer); S.timer = null; }
   if (S.rushTimer) { clearInterval(S.rushTimer); S.rushTimer = null; }
   S.inputEnabled = true;
-  if (S.screen === 'game' || S.screen === 'feedback' || S.screen === 'results') {
+  if (S.screen === 'game' || S.screen === 'results') {
     S.screen = 'modeSelect';
   } else if (S.screen === 'discovery') {
     S.screen = 'menu';
@@ -1700,7 +2308,10 @@ function goBack() {
     S.screen = 'levelSelect';
   } else if (S.screen === 'levelSelect') {
     S.screen = 'menu';
-  } else if (S.screen === 'progress' || S.screen === 'howToPlay' || S.screen === 'deleteConfirm') {
+  } else if (S.screen === 'deleteConfirm') {
+    S.deleteProfileIdx = null;
+    S.screen = 'profiles';
+  } else if (S.screen === 'progress' || S.screen === 'howToPlay') {
     S.screen = 'menu';
   } else if (S.screen === 'newProfile') {
     S.screen = 'profiles';
@@ -1714,6 +2325,7 @@ function goBack() {
     store.activeProfile = null;
     saveStore(store);
     S.screen = 'welcome';
+    clearSession();
   }
   render();
 }
@@ -1732,15 +2344,20 @@ input.addEventListener('keydown', (e) => {
   }
 });
 
-// Keep focus on input
+// Close settings on outside click + keep focus on input
 document.addEventListener('click', (e) => {
-  if (!input.disabled && e.target.id !== 'back-btn' && e.target.id !== 'mute-btn') input.focus();
+  if (!e.target.closest('#settings-wrap')) closeSettings();
+  if ($('input-bar').style.display !== 'none' && !input.disabled && !e.target.closest('#tap-area') && !e.target.closest('#back-btn') && !e.target.closest('#settings-wrap')) {
+    input.focus();
+  }
 });
 
 // Scroll input into view when mobile keyboard opens
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
-    $('input-bar').scrollIntoView({ block: 'end', behavior: 'smooth' });
+    if ($('input-bar').style.display !== 'none') {
+      $('input-bar').scrollIntoView({ block: 'end', behavior: 'smooth' });
+    }
   });
 }
 
@@ -1750,8 +2367,65 @@ window.addEventListener('beforeunload', () => {
   if (S.rushTimer) clearInterval(S.rushTimer);
 });
 
-// Restore session: only skip welcome if actively in a profile
+// ─── SESSION PERSISTENCE ─────────────────────────────────────
+const SESSION_KEY = 'owlsh_session';
+const SESSION_FIELDS = [
+  'screen','level','mode','words','wordIdx','score','streak','bestStreak',
+  'correct','results','phase','attempts','hint','choices',
+  'selectedLetters','availableLetters','_filledLetters',
+  '_storySentence','_storyWord',
+  'rushTime','rushActive',
+  'discoveryWords','discoveryResults','discoveryIdx','discoveryPhase','discoveryChoices',
+  'newName','newAvatar',
+];
+
+function saveSession() {
+  const snap = {};
+  SESSION_FIELDS.forEach(k => { snap[k] = S[k]; });
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(snap)); } catch {}
+}
+
+function restoreSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return false;
+    const snap = JSON.parse(raw);
+    if (!snap || !snap.screen) return false;
+
+    // Only restore if the active profile still exists
+    const store = loadStore();
+    if (store.activeProfile === null || !store.profiles[store.activeProfile]) return false;
+
+    SESSION_FIELDS.forEach(k => { if (snap[k] !== undefined) S[k] = snap[k]; });
+
+    // Timers can't persist — fix up phase states
+    if (S.screen === 'game') {
+      if (S.mode === 0 && S.phase === 'show') {
+        // Flash was showing word — skip to answer phase
+        S.phase = 'type';
+        S.inputEnabled = true;
+      }
+      if (S.mode === 3 && S.rushActive) {
+        // Rush — restart countdown from saved time
+        S.inputEnabled = true;
+        startRushTimer();
+      }
+    } else if (S.screen === 'discovery') {
+      if (S.discoveryPhase === 'show' && S.discoveryIdx < S.discoveryWords.length) {
+        S.discoveryPhase = 'type';
+        S.inputEnabled = true;
+      }
+    }
+    return true;
+  } catch { return false; }
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
 function initScreen() {
+  if (restoreSession()) return;
   const store = loadStore();
   if (store.activeProfile !== null && store.profiles[store.activeProfile]) {
     S.screen = 'menu';
