@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>owlsh — Sight Words Terminal</title>
   <meta name="theme-color" content="#0d1117">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -39,7 +39,7 @@
         'text-t-accent','text-t-blue','text-t-green','text-t-red',
         'text-t-yellow','text-t-purple','text-t-dim','text-t-fg',
         'font-bold','animate-pulse','underline','opacity-50',
-        'bg-t-green/20','bg-t-red/20',
+        'bg-t-green/20','bg-t-red/20','md:p-6',
       ]
     }
   </script>
@@ -70,7 +70,7 @@
     #back-btn.visible { display: inline-flex; }
     #tap-area { padding: 1rem 1rem 0.75rem; border-top: 1px solid #30363d; margin-top: auto; overflow-y: auto; }
     #tap-area.hidden { display: none; }
-    html, body { overflow: hidden; height: 100%; }
+    html, body { overflow: hidden; height: 100%; background-color: #0d1117; color: #e6edf3; }
     .tap-btn {
       display: inline-flex; align-items: center; justify-content: center;
       min-height: 48px; min-width: 48px; padding: 10px 20px;
@@ -159,9 +159,31 @@
     }
     /* Responsive: tablets and up (≥768px) */
     @media (min-width: 768px) {
+      .tap-btn { font-size: 17px; padding: 12px 24px; }
+      .tap-btn-large { font-size: 22px; min-height: 60px; padding: 16px 28px; }
       .word-card { font-size: 24px; min-height: 64px; }
-      .menu-card { min-height: 80px; font-size: 16px; }
       .letter-tile, .letter-slot { width: 52px; height: 52px; font-size: 24px; }
+      .menu-card { min-height: 80px; font-size: 16px; }
+      .menu-grid { gap: 14px; }
+      .profile-card { min-height: 64px; padding: 14px 20px; font-size: 17px; }
+      .profile-card .avatar { font-size: 24px; }
+      .profile-card .level { font-size: 14px; }
+      #tap-area { padding: 1.25rem 1.5rem 1rem; }
+    }
+    /* Responsive: landscape / short viewports */
+    @media (max-height: 500px) {
+      .tap-btn-large { min-height: 44px; padding: 10px 16px; font-size: 17px; }
+      .word-card { min-height: 44px; font-size: 18px; padding: 8px 12px; }
+      .menu-card { min-height: 56px; padding: 10px 6px; }
+      .profile-card { min-height: 44px; padding: 8px 12px; }
+      .letter-tile, .letter-slot { width: 40px; height: 40px; font-size: 18px; }
+      #tap-area { padding: 0.5rem 0.75rem; }
+    }
+    /* Safe area insets for modern phones (notch, home indicator) */
+    @supports (padding: env(safe-area-inset-bottom)) {
+      body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+      #tap-area { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+      #input-bar { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
     }
     #settings-wrap { position: relative; }
     #settings-btn { cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; padding: 2px; display: flex; align-items: center; opacity: 0.7; }
@@ -185,7 +207,7 @@
     .settings-val { color: #484f58; font-size: 12px; }
   </style>
 </head>
-<body class="bg-t-bg h-[100dvh] flex flex-col items-center p-3 sm:p-4 selection:bg-t-accent/30 overflow-hidden">
+<body class="bg-t-bg h-[100dvh] flex flex-col items-center p-3 sm:p-4 md:p-6 selection:bg-t-accent/30 overflow-hidden">
   <div class="w-full max-w-[68ch] flex flex-col h-full">
     <!-- Terminal title bar -->
     <div class="flex items-center gap-2 px-4 py-2 bg-t-surface rounded-t-lg border border-t-border shrink-0">
